@@ -154,4 +154,6 @@ Supported table formats are (thanks to python-tabulate package):
 - "latex_raw"
 - "latex_booktabs"
 - "textile"
+- "csv"
+
 
