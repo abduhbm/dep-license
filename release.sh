@@ -2,7 +2,7 @@ set -ex
 
 git pull origin master
 # bump version
-docker run --rm -v "$PWD":/app treeder/bump $1
+docker run --rm -v "$PWD":/app treeder/bump $1 --input dep_license/VERSION
 version=`cat VERSION`
 echo "version: $version"
 
