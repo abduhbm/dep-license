@@ -22,9 +22,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
-about = {}
-with open(os.path.join(here, NAME, '__version__.py')) as f:
-    exec(f.read(), about)
+with open(os.path.join(here, 'VERSION')) as version_file:
+    version = version_file.read().strip()
 
 
 class UploadCommand(Command):
@@ -62,7 +61,7 @@ class UploadCommand(Command):
 
 setup(
     name=NAME,
-    version=about['__version__'],
+    version=version,
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
