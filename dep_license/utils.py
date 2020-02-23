@@ -2,11 +2,10 @@ import os
 # for pip >= 10
 try:
     from pip._internal.req import parse_requirements
-    from pip._internal.download import PipSession
+
 # for pip <= 9.0.3
 except ImportError:
     from pip.req import parse_requirements
-    from pip.download import PipSession
 
 try:
     import configparser
@@ -27,7 +26,7 @@ def parse_file(input_file, base_name, dev=False):
 
 def parse_req_file(input_file):
     output = []
-    for r in parse_requirements(input_file, session=PipSession()):
+    for r in parse_requirements(input_file, session='hack'):
         output.append(r.name)
 
     return output

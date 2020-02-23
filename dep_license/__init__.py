@@ -32,6 +32,7 @@ def get_params():
     parser.add_argument('-o', '--output', default=None, help='path for output file')
     parser.add_argument('-d', '--dev', action='store_true', default=False, help='include dev packages from Pipfile')
     parser.add_argument('-n', '--name', default=None, help='name for pip-requirements file')
+    parser.add_argument('-v', '--version', action='version', version=__version__)
 
     args = parser.parse_args()
     project = args.PROJECT
@@ -104,8 +105,10 @@ def run():
             r = requests.get(url)
             if r.status_code != 200:
                 continue
-            with tempfile.NamedTemporaryFile() as fb:
-                fb.write(r.content)
+            with tempfile.NamedTemporaryFile(mode='w') as fb:
+                lines = [str(l) for l in r.text.splitlines()]
+                lines = [l for l in lines if not l.startswith('-r')]
+                fb.write('\n'.join(lines))
                 fb.seek(0)
                 dependencies += parse_file(fb.name, f, dev=dev)
                 fb.close()
@@ -127,7 +130,7 @@ def run():
     if len(dependencies) < cpu_count:
         cpu_count = len(dependencies)
 
-    print("Total number of dependencies: {}".format(len(dependencies)))
+    print("Number of dependencies: {}".format(len(dependencies)))
     print("Running with {} processes...".format(cpu_count))
 
     chunks = chunker_list(dependencies, cpu_count)
