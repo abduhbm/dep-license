@@ -12,7 +12,8 @@ from tabulate import tabulate
 
 from dep_license.utils import parse_file
 
-__version__ = open('VERSION', 'r').readline().strip()
+__version__ = open(os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                                'VERSION'), 'r').readline().strip()
 
 SUPPORTED_SITES = ['github.com']
 SUPPORTED_FILES = ['requirements.txt', 'Pipfile', 'setup.py']

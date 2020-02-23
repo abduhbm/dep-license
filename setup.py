@@ -22,7 +22,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
-with open(os.path.join(here, 'VERSION')) as version_file:
+with open(os.path.join(here, NAME, 'VERSION')) as version_file:
     version = version_file.read().strip()
 
 
