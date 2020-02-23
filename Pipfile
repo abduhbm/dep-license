@@ -1,8 +1,15 @@
 [[source]]
+name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-name = "pypi"
+
+[dev-packages]
 
 [packages]
-requests = "*"
-tabulate = "*"
+certifi = "==2019.3.9"
+chardet = "==3.0.4"
+idna = "==2.8"
+requests = "==2.22.0"
+tabulate = "==0.8.6"
+urllib3 = "==1.25.3"
+
