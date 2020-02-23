@@ -9,5 +9,5 @@ echo "version: $version"
 # tag it
 git commit -a -m "version $version"
 git tag -a "$version" -m "version $version"
-#git push
-#git push --tags
+git push
+git push --tags
