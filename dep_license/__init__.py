@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from .__version__ import __version__
 
 import os
 import sys
@@ -12,6 +11,8 @@ import multiprocessing as mp
 from tabulate import tabulate
 
 from dep_license.utils import parse_file
+
+__version__ = open('VERSION', 'r').readline().strip()
 
 SUPPORTED_SITES = ['github.com']
 SUPPORTED_FILES = ['requirements.txt', 'Pipfile', 'setup.py']
