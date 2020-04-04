@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
+import logging
 import os
-import sys
 import tempfile
 import argparse
 import requests
+import zipfile
 import multiprocessing as mp
 from tabulate import tabulate
 
 from dep_license.utils import parse_file
+
+logger = logging.getLogger('dep_license')
 
 __version__ = open(os.path.join(os.path.abspath(os.path.dirname(__file__)),
                                 'VERSION'), 'r').readline().strip()
@@ -57,9 +58,12 @@ def worker(chunk):
     for d in chunk:
         if not d:
             continue
+        d = d.replace('"', '')
+        d = d.replace("'", '')
         record = [d]
         r = requests.get('{}/{}/json'.format(PYPYI_URL, d))
         if r.status_code != 200:
+            logger.warning('not license info found for {}'.format(d))
             continue
         output = r.json().get('info')
 
@@ -99,30 +103,34 @@ def run():
             dependencies += parse_file(project, filename, dev=dev)
 
     elif is_valid_url(project):
-        if project.endswith('/'):
-            project = project[:-1]
-
-        for f in req_files:
-            url = GITHUB_URL + '/'.join(project.split('/')[-2:]) + '/master/' + f
-            r = requests.get(url)
-            if r.status_code != 200:
-                continue
-            with tempfile.NamedTemporaryFile(mode='w') as fb:
-                lines = [str(l) for l in r.text.splitlines()]
-                lines = [l for l in lines if not l.startswith('-r')]
-                fb.write('\n'.join(lines))
-                fb.seek(0)
-                dependencies += parse_file(fb.name, f, dev=dev)
-                fb.close()
+        url = '{}/archive/master.zip'.format(project)
+        r = requests.get(url)
+        if r.status_code != 200:
+            raise ValueError('wrong URL')
+        with tempfile.NamedTemporaryFile(mode='wb') as fb:
+            fb.write(r.content)
+            fb.seek(0)
+            zip_file = zipfile.ZipFile(fb.name)
+            temp_dir = tempfile.TemporaryDirectory()
+            zip_file.extractall(path=temp_dir.name)
+            dir_name = os.path.join(temp_dir.name,
+                                    '{}-master'.format(project.rsplit('/', 1)[-1]))
+            for f in req_files:
+                f_name = os.path.join(dir_name, f)
+                if os.path.isfile(f_name):
+                    dependencies += parse_file(f_name, f, dev=dev)
+            fb.close()
+            temp_dir.cleanup()
+            zip_file.close()
 
     else:
-        print("Path or URL for the given project is invalid.", file=sys.stderr)
-        sys.exit(1)
+        logger.error("Path or URL for the given project is invalid.")
+        exit(1)
 
     dependencies = list(set(dependencies))
     if len(dependencies) == 0:
-        print("no dependencies found", file=sys.stderr)
-        sys.exit(1)
+        logger.error("no dependencies found")
+        exit(1)
 
     if np == 'MAX':
         cpu_count = mp.cpu_count()
@@ -132,8 +140,8 @@ def run():
     if len(dependencies) < cpu_count:
         cpu_count = len(dependencies)
 
-    print("Number of dependencies: {}".format(len(dependencies)))
-    print("Running with {} processes...".format(cpu_count))
+    print("Number of found dependencies: {}".format(len(dependencies)))
+    logger.debug("Running with {} processes ...".format(cpu_count))
 
     chunks = chunker_list(dependencies, cpu_count)
     pool = mp.Pool(cpu_count)
@@ -146,8 +154,8 @@ def run():
         results += p
 
     if len(results) == 0:
-        print("no license information found", file=sys.stderr)
-        sys.exit(1)
+        logger.error("no license information found")
+        exit(1)
 
     print("licenses:\n")
     output = ''
