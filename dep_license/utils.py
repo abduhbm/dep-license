@@ -1,4 +1,8 @@
+import distutils
+import sys
 import os
+import pkg_resources
+
 # for pip >= 10
 try:
     from pip._internal.req import parse_requirements
@@ -40,10 +44,26 @@ def parse_pip_file(input_file, dev=False):
         output += list(dict(cf.items('packages')).keys())
         if dev:
             output += list(dict(cf.items('dev-packages')).keys())
-
     return output
 
 
 def parse_setup_file(input_file):
-    # TODO: add support to parse setup.py
-    return []
+    output = []
+    cur_dir = os.getcwd()
+    setup_dir = os.path.dirname(input_file)
+    sys.path.append(setup_dir)
+    os.chdir(setup_dir)
+    setup = distutils.core.run_setup(input_file)
+    reqs_var = ['install_requires', 'setup_requires', 'extras_require']
+    for v in reqs_var:
+        reqs = getattr(setup, v)
+        if isinstance(reqs, list):
+            for i in pkg_resources.parse_requirements(reqs):
+                output.append(i.project_name)
+
+        elif isinstance(reqs, dict):
+            for i in pkg_resources.parse_requirements({v for req in reqs.values() for v in req}):
+                output.append(i.project_name)
+
+    os.chdir(cur_dir)
+    return output
