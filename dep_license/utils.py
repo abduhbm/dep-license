@@ -1,3 +1,4 @@
+import logging
 import distutils
 import sys
 import os
@@ -16,16 +17,22 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+logger = logging.getLogger(__name__)
+
 
 def parse_file(input_file, base_name, dev=False):
-    if base_name == 'Pipfile':
-        return parse_pip_file(input_file, dev=dev)
+    try:
+        if base_name == 'Pipfile':
+            return parse_pip_file(input_file, dev=dev)
 
-    elif base_name == 'setup.py':
-        return parse_setup_file(input_file)
+        elif base_name == 'setup.py':
+            return parse_setup_file(input_file)
 
-    else:
-        return parse_req_file(input_file)
+        else:
+            return parse_req_file(input_file)
+    except Exception as e:
+        logger.error(e)
+        return []
 
 
 def parse_req_file(input_file):
@@ -50,7 +57,7 @@ def parse_pip_file(input_file, dev=False):
 def parse_setup_file(input_file):
     output = []
     cur_dir = os.getcwd()
-    setup_dir = os.path.dirname(input_file)
+    setup_dir = os.path.abspath(os.path.dirname(input_file))
     sys.path.append(setup_dir)
     os.chdir(setup_dir)
     setup = distutils.core.run_setup(input_file)
