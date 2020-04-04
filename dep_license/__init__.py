@@ -68,7 +68,8 @@ def worker(chunk):
         output = r.json().get('info')
 
         meta = output.get('license', '')
-        record.append(meta.strip())
+        if meta:
+            record.append(meta.strip())
 
         license_class = ''
         classifier = output.get('classifiers', '')
