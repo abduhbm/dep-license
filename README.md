@@ -1,6 +1,6 @@
 # dep_license
 
-**dep_lic**: a simple utility to report licenses information for dependencies in use by a Python project. It supports parsing contents from `setup.py`, `requirements.txt` and `Pipfile` files from the project directory or its GitHub repo. 
+**dep_lic**: a simple utility to report licenses information for dependencies in use by a Python project. It supports parsing contents from `setup.py`, `requirements.txt` and `Pipfile` files from the project directory or its GitHub repo.
 
 ### Installation
 
@@ -33,9 +33,9 @@ optional arguments:
 
 ### Usage
 
-Report a list of dependency licenses used in a local project: 
+Report a list of dependency licenses used in a local project:
 ```
-$ deplic /path/to/python/project 
+$ deplic /path/to/python/project
 Total number of dependencies: 3
 Running with 3 processes...
 licenses:
@@ -50,7 +50,7 @@ licenses:
 Specify the file to be parsed:
 
 ```
-$ deplic /path/to/python/project/requirements.txt 
+$ deplic /path/to/python/project/requirements.txt
 Total number of dependencies: 1
 Running with 1 processes...
 licenses:
@@ -124,7 +124,7 @@ httpbin          MIT                                                           O
 alabaster                                                                      OSI Approved::BSD License
 readme-renderer  Apache License, Version 2.0                                   OSI Approved::Apache Software License
 detox            MIT                                                           OSI Approved::MIT License
- 
+
 ```
 
 Specify which requirements file to parse:
@@ -156,5 +156,3 @@ Supported table formats are (thanks to python-tabulate package):
 - "latex_booktabs"
 - "textile"
 - "csv"
-
-
