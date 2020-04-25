@@ -12,7 +12,8 @@ $ pip install dep_license
 
 ```
 $ deplic --help
-usage: deplic [-h] [-p PROCESSES] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME] [-v]
+usage: deplic [-h] [-p PROCESSES] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
+              [-c CHECK] [-v]
               PROJECT
 
 positional arguments:
@@ -28,6 +29,9 @@ optional arguments:
                         path for output file (default: None)
   -d, --dev             include dev packages from Pipfile (default: False)
   -n NAME, --name NAME  name for pip-requirements file (default: None)
+  -c CHECK, --check CHECK
+                        path to a configuration file to check against banned
+                        licenses (default: None)
   -v, --version         show program's version number and exit
 ```
 
@@ -36,9 +40,7 @@ optional arguments:
 Report a list of dependency licenses used in a local project:
 ```
 $ deplic /path/to/python/project
-Total number of dependencies: 3
-Running with 3 processes...
-licenses:
+Found dependencies: 3
 
 | Name       | Meta   | Classifier                                       |
 |------------|--------|--------------------------------------------------|
@@ -51,9 +53,7 @@ Specify the file to be parsed:
 
 ```
 $ deplic /path/to/python/project/requirements.txt
-Total number of dependencies: 1
-Running with 1 processes...
-licenses:
+Found dependencies: 1
 
 | Name   | Meta   | Classifier   |
 |--------|--------|--------------|
@@ -64,9 +64,7 @@ licenses:
 Support for Pipfile:
 ```
 $ deplic /path/to/python/project/Pipfile
-Total number of dependencies: 3
-Running with 3 processes...
-licenses:
+Found dependencies: 3
 
 | Name       | Meta   | Classifier                                       |
 |------------|--------|--------------------------------------------------|
@@ -78,9 +76,7 @@ licenses:
 Format and store output as JSON file:
 ```
 deplic /path/to/python/project -f json -o dep-licenses.json
-Total number of dependencies: 3
-Running with 3 processes...
-licenses:
+Found dependencies: 3
 
 [
     {
@@ -104,9 +100,8 @@ licenses:
 Get the list dev-packages from the project's GitHub repo:
 ```
 $ deplic https://github.com/kennethreitz/requests -p 16 -d -f md
-Total number of dependencies: 16
+Found dependencies: 16
 Running with 16 processes...
-licenses:
 
 Name             Meta                                                          Classifier
 ---------------  ------------------------------------------------------------  -------------------------------------
@@ -132,6 +127,25 @@ Specify which requirements file to parse:
 $ deplic https://github.com/pandas-dev/pandas -n requirements-dev.txt -f csv -p 16 -o pandas_dev.csv
 ```
 
+Run a check against banned licenses listed in a configuration file:
+```bash
+$ more deplic.cfg
+```
+```ini
+[deplic]
+banned = AGPL
+# or comma separated values
+# banned = AGPL,....
+```
+```
+$ deplic --check deplic.cfg https://github.com/edx/edx-enterprise
+
+BANNED: django-config-models with license AGPL 3.0
+BANNED: code-annotations with license AGPL 3.0
+BANNED: edx-opaque-keys with license AGPL-3.0
+BANNED: edx-rbac with license AGPL 3.0
+BANNED: edx-django-utils with license AGPL 3.0
+```
 ### Output Formats:
 
 Supported table formats are (thanks to python-tabulate package):
