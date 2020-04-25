@@ -55,6 +55,12 @@ def get_params():
     parser.add_argument(
         "-n", "--name", default=None, help="name for pip-requirements file"
     )
+    parser.add_argument(
+        "-c",
+        "--check",
+        default=None,
+        help="path to a configuration file to check against banned licenses",
+    )
     parser.add_argument("-v", "--version", action="version", version=__version__)
 
     args = parser.parse_args()
@@ -64,8 +70,9 @@ def get_params():
     output = args.output
     dev = args.dev
     name = args.name
+    check = args.check
 
-    return project, np, fmt, output, dev, name
+    return project, np, fmt, output, dev, name, check
 
 
 def chunker_list(seq, size):
@@ -104,7 +111,7 @@ def worker(chunk):
 
 
 def run():
-    project, np, fmt, output_file, dev, name = get_params()
+    project, np, fmt, output_file, dev, name, check = get_params()
     if name:
         req_files = [name]
     else:
@@ -162,7 +169,7 @@ def run():
     if len(dependencies) < cpu_count:
         cpu_count = len(dependencies)
 
-    print("Number of found dependencies: {}".format(len(dependencies)))
+    print("Found dependencies: {}\n".format(len(dependencies)))
     logger.debug("Running with {} processes ...".format(cpu_count))
 
     chunks = chunker_list(dependencies, cpu_count)
@@ -179,7 +186,6 @@ def run():
         logger.error("no license information found")
         exit(1)
 
-    print("licenses:\n")
     output = ""
     fmt = fmt.lower()
     if fmt == "json":
@@ -208,3 +214,35 @@ def run():
             f.write(output)
             f.close()
             print("output file is stored in {}".format(os.path.abspath(output_file)))
+
+    if check:
+        import configparser
+
+        return_val = 0
+
+        if not os.path.isfile(check):
+            logger.error("configuration file not found")
+            exit(1)
+        config = configparser.ConfigParser()
+        config.read(check)
+        try:
+            banned_licenses = config.get("deplic", "banned")
+        except Exception:
+            banned_licenses = None
+
+        if banned_licenses:
+            banned_licenses = banned_licenses.split(",")
+            banned_licenses = [l.lower() for l in banned_licenses]
+            for r in results:
+                name = r.get("Name")
+                meta = r.get("Meta")
+                if meta.lower() in banned_licenses:
+                    print(
+                        f"\x1b[1;31mBANNED\x1b[0m: "
+                        f"\x1b[1;33m{name}\x1b[0m "
+                        f"with license \x1b[1;33m{meta}\x1b[0m",
+                        end="\n",
+                    )
+                    return_val = 1
+
+            exit(return_val)
