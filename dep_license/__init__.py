@@ -217,6 +217,7 @@ def run():
 
     if check:
         import configparser
+        from difflib import get_close_matches
 
         return_val = 0
 
@@ -236,7 +237,7 @@ def run():
             for r in results:
                 name = r.get("Name")
                 meta = r.get("Meta")
-                if meta.lower() in banned_licenses:
+                if get_close_matches(meta.lower(), banned_licenses):
                     print(
                         f"\x1b[1;31mBANNED\x1b[0m: "
                         f"\x1b[1;33m{name}\x1b[0m "
