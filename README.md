@@ -138,7 +138,7 @@ banned = AGPL
 # banned = AGPL,....
 ```
 ```
-$ deplic --check deplic.cfg https://github.com/edx/edx-enterprise
+$ deplic --check ./deplic.cfg https://github.com/edx/edx-enterprise
 
 BANNED: django-config-models with license AGPL 3.0
 BANNED: code-annotations with license AGPL 3.0
