@@ -1,0 +1,8 @@
+- id: deplic
+  name: deplic
+  description: "deplic: Report license information for dependencies in use by a Python project"
+  entry: deplic
+  language: python
+  require_serial: true
+  types: [text]
+  files: (requirements.*\.txt$|setup.py$|Pipfile$)
