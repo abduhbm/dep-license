@@ -34,7 +34,7 @@ def get_params():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("PROJECT", help="path or URL to the project repo")
+    parser.add_argument("PROJECT", nargs="+", help="path or URL to the project repo")
     parser.add_argument(
         "-p",
         "--processes",
@@ -111,7 +111,7 @@ def worker(chunk):
 
 
 def run():
-    project, np, fmt, output_file, dev, name, check = get_params()
+    projects, np, fmt, output_file, dev, name, check = get_params()
     if name:
         req_files = [name]
     else:
@@ -119,42 +119,42 @@ def run():
 
     dependencies = []
 
-    if os.path.isdir(os.path.abspath(project)):
-        for f in req_files:
-            filename = os.path.join(project, f)
-            if os.path.isfile(filename):
-                dependencies += parse_file(filename, f, dev=dev)
-
-    elif os.path.isfile(os.path.abspath(project)):
-        filename = os.path.basename(project)
-        if filename in req_files:
-            dependencies += parse_file(project, filename, dev=dev)
-
-    elif is_valid_url(project):
-        url = "{}/archive/master.zip".format(project)
-        r = requests.get(url)
-        if r.status_code != 200:
-            raise ValueError("wrong URL")
-        with tempfile.NamedTemporaryFile(mode="wb") as fb:
-            fb.write(r.content)
-            fb.seek(0)
-            zip_file = zipfile.ZipFile(fb.name)
-            temp_dir = tempfile.TemporaryDirectory()
-            zip_file.extractall(path=temp_dir.name)
-            dir_name = os.path.join(
-                temp_dir.name, "{}-master".format(project.rsplit("/", 1)[-1])
-            )
+    for project in projects:
+        if os.path.isdir(os.path.abspath(project)):
             for f in req_files:
-                f_name = os.path.join(dir_name, f)
-                if os.path.isfile(f_name):
-                    dependencies += parse_file(f_name, f, dev=dev)
-            fb.close()
-            temp_dir.cleanup()
-            zip_file.close()
+                filename = os.path.join(project, f)
+                if os.path.isfile(filename):
+                    dependencies += parse_file(filename, f, dev=dev)
 
-    else:
-        logger.error("Path or URL for the given project is invalid.")
-        exit(1)
+        elif os.path.isfile(os.path.abspath(project)):
+            filename = os.path.basename(project)
+            if filename in req_files:
+                dependencies += parse_file(project, filename, dev=dev)
+
+        elif is_valid_url(project):
+            url = "{}/archive/master.zip".format(project)
+            r = requests.get(url)
+            if r.status_code != 200:
+                raise ValueError("wrong URL")
+            with tempfile.NamedTemporaryFile(mode="wb") as fb:
+                fb.write(r.content)
+                fb.seek(0)
+                zip_file = zipfile.ZipFile(fb.name)
+                temp_dir = tempfile.TemporaryDirectory()
+                zip_file.extractall(path=temp_dir.name)
+                dir_name = os.path.join(
+                    temp_dir.name, "{}-master".format(project.rsplit("/", 1)[-1])
+                )
+                for f in req_files:
+                    f_name = os.path.join(dir_name, f)
+                    if os.path.isfile(f_name):
+                        dependencies += parse_file(f_name, f, dev=dev)
+                fb.close()
+                temp_dir.cleanup()
+                zip_file.close()
+
+        else:
+            logger.error(f"{project} is invalid.")
 
     dependencies = list(set(dependencies))
     if len(dependencies) == 0:
@@ -192,7 +192,6 @@ def run():
         import json
 
         output = json.dumps(results, indent=4)
-        print(output)
 
     else:
         rows = []
@@ -206,9 +205,10 @@ def run():
                 output += ",".join(row) + "\n"
         else:
             output = tabulate(rows, columns, tablefmt=fmt)
-        print(output)
 
-    print(" ")
+    if not check:
+        print(output, end="\n")
+
     if output_file:
         with open(output_file, "w") as f:
             f.write(output)
