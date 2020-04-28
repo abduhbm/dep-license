@@ -131,12 +131,14 @@ def run():
 
     for project in projects:
         if os.path.isdir(os.path.abspath(project)):
+            project = os.path.abspath(project)
             for f in req_files:
                 filename = os.path.join(project, f)
                 if os.path.isfile(filename):
                     dependencies += parse_file(filename, f, dev=dev)
 
         elif os.path.isfile(os.path.abspath(project)):
+            project = os.path.abspath(project)
             filename = os.path.basename(project)
             if filename in req_files:
                 dependencies += parse_file(project, filename, dev=dev)
