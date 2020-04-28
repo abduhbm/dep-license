@@ -13,7 +13,7 @@ DESCRIPTION = "Report licenses information for dependencies in use by a Python p
 URL = "https://github.com/abduhbm/dep-license"
 AUTHOR = "Abdulelah Bin Mahfoodh"
 
-REQUIRED = ["tabulate", "requests"]
+REQUIRED = ["tabulate", "GitPython"]
 
 here = os.path.abspath(os.path.dirname(__file__))
 
