@@ -17,7 +17,7 @@ usage: deplic [-h] [-p PROCESSES] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
               PROJECT
 
 positional arguments:
-  PROJECT               path or URL to the project repo
+  PROJECT               path to project or its GIT repo
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -97,7 +97,7 @@ Found dependencies: 3
 ]
 ```
 
-Get the list dev-packages from the project's GitHub repo:
+Get the list dev-packages from the project's GIT repo:
 ```
 $ deplic https://github.com/kennethreitz/requests -p 16 -d -f md
 Found dependencies: 16
