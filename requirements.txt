@@ -1,7 +1,4 @@
--i https://pypi.org/simple
-certifi==2019.11.28
-chardet==3.0.4
-idna==2.9
-requests==2.23.0
-tabulate==0.8.6
-urllib3==1.25.8
+gitdb==4.0.4
+GitPython==3.1.1
+smmap==3.0.2
+tabulate==0.8.7
