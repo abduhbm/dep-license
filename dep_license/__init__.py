@@ -4,8 +4,9 @@ import logging
 import os
 import tempfile
 import argparse
-import requests
-import zipfile
+import git
+import json
+from urllib.request import urlopen
 import multiprocessing as mp
 from tabulate import tabulate
 
@@ -19,21 +20,27 @@ __version__ = (
     .strip()
 )
 
-SUPPORTED_SITES = ["github.com"]
 SUPPORTED_FILES = ["requirements.txt", "Pipfile", "setup.py"]
 PYPYI_URL = "https://pypi.python.org/pypi"
 
 
-def is_valid_url(url):
-    p = requests.utils.urlparse(url)
-    return p.scheme in ("http", "https")
+def is_valid_git_remote(project):
+    import git
+
+    g = git.cmd.Git()
+    try:
+        g.ls_remote(project).split("\n")
+        return True
+    except Exception as e:
+        logger.error(e)
+        return False
 
 
 def get_params():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("PROJECT", nargs="+", help="path or URL to the project repo")
+    parser.add_argument("PROJECT", nargs="+", help="path to project or its GIT repo")
     parser.add_argument(
         "-p",
         "--processes",
@@ -87,11 +94,15 @@ def worker(chunk):
         d = d.replace('"', "")
         d = d.replace("'", "")
         record = [d]
-        r = requests.get("{}/{}/json".format(PYPYI_URL, d))
-        if r.status_code != 200:
-            logger.warning("not license info found for {}".format(d))
+        r = urlopen("{}/{}/json".format(PYPYI_URL, d))
+        if r.status != 200:
+            logger.warning(f"not license info found for {d}")
             continue
-        output = r.json().get("info")
+        try:
+            output = json.loads(r.read().decode()).get("info")
+        except Exception:
+            logger.warning(f"invalid json file for {d}")
+            continue
 
         meta = output.get("license", "")
         if meta:
@@ -130,30 +141,20 @@ def run():
             if filename in req_files:
                 dependencies += parse_file(project, filename, dev=dev)
 
-        elif is_valid_url(project):
-            url = "{}/archive/master.zip".format(project)
-            r = requests.get(url)
-            if r.status_code != 200:
-                raise ValueError("wrong URL")
-            with tempfile.NamedTemporaryFile(mode="wb") as fb:
-                fb.write(r.content)
-                fb.seek(0)
-                zip_file = zipfile.ZipFile(fb.name)
-                temp_dir = tempfile.TemporaryDirectory()
-                zip_file.extractall(path=temp_dir.name)
-                dir_name = os.path.join(
-                    temp_dir.name, "{}-master".format(project.rsplit("/", 1)[-1])
-                )
-                for f in req_files:
-                    f_name = os.path.join(dir_name, f)
-                    if os.path.isfile(f_name):
-                        dependencies += parse_file(f_name, f, dev=dev)
-                fb.close()
-                temp_dir.cleanup()
-                zip_file.close()
+        elif is_valid_git_remote(project):
+            temp_dir = tempfile.TemporaryDirectory()
+            git.Git(temp_dir.name).clone(project)
+            dir_name = os.path.join(
+                temp_dir.name, project.rsplit("/", 1)[-1].split(".")[0]
+            )
+            for f in req_files:
+                f_name = os.path.join(dir_name, f)
+                if os.path.isfile(f_name):
+                    dependencies += parse_file(f_name, f, dev=dev)
+            temp_dir.cleanup()
 
         else:
-            logger.error(f"{project} is invalid.")
+            logger.error(f"{project} is invalid project.")
 
     dependencies = list(set(dependencies))
     if len(dependencies) == 0:
