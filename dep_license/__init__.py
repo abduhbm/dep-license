@@ -22,12 +22,11 @@ __version__ = (
 SUPPORTED_SITES = ["github.com"]
 SUPPORTED_FILES = ["requirements.txt", "Pipfile", "setup.py"]
 PYPYI_URL = "https://pypi.python.org/pypi"
-GITHUB_URL = "https://raw.githubusercontent.com/"
 
 
 def is_valid_url(url):
     p = requests.utils.urlparse(url)
-    return p.scheme in ("http", "https") and p.netloc in SUPPORTED_SITES
+    return p.scheme in ("http", "https")
 
 
 def get_params():
