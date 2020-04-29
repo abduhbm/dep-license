@@ -3,6 +3,7 @@ import distutils
 import sys
 import os
 import pkg_resources
+import toml
 
 # for pip >= 10
 try:
@@ -12,12 +13,7 @@ try:
 except ImportError:
     from pip.req import parse_requirements
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("__name__")
 
 
 def parse_file(input_file, base_name, dev=False):
@@ -27,6 +23,9 @@ def parse_file(input_file, base_name, dev=False):
 
         elif base_name == "setup.py":
             return parse_setup_file(input_file)
+
+        elif base_name == "pyproject.toml":
+            return parse_pyproject_file(input_file)
 
         else:
             return parse_req_file(input_file)
@@ -45,12 +44,19 @@ def parse_req_file(input_file):
 
 def parse_pip_file(input_file, dev=False):
     output = []
-    cf = configparser.ConfigParser()
-    with open(input_file) as f:
-        cf.read_file(f)
-        output += list(dict(cf.items("packages")).keys())
-        if dev:
-            output += list(dict(cf.items("dev-packages")).keys())
+    cf = toml.load(input_file)
+    output += list(cf.get("packages", {}).keys())
+    if dev:
+        output += list(cf.get("dev-packages", {}).keys())
+    return output
+
+
+def parse_pyproject_file(input_file):
+    output = []
+    cf = toml.load(input_file)
+    reqs = cf.get("build-system", {}).get("requires", [])
+    for i in pkg_resources.parse_requirements(reqs):
+        output.append(i.project_name)
     return output
 
 
@@ -60,7 +66,11 @@ def parse_setup_file(input_file):
     setup_dir = os.path.abspath(os.path.dirname(input_file))
     sys.path.append(setup_dir)
     os.chdir(setup_dir)
-    setup = distutils.core.run_setup(input_file)
+    try:
+        setup = distutils.core.run_setup(input_file, stop_after="config")
+    except Exception:
+        return []
+
     reqs_var = ["install_requires", "setup_requires", "extras_require"]
     for v in reqs_var:
         reqs = getattr(setup, v)
