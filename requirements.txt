@@ -1,4 +1,5 @@
-gitdb==4.0.4
-GitPython==3.1.1
-smmap==3.0.2
-tabulate==0.8.7
+gitdb>=4.0.4
+GitPython>=3.1.1
+smmap>=3.0.2
+tabulate>=0.8.7
+toml
