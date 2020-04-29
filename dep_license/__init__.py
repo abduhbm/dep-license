@@ -22,6 +22,7 @@ __version__ = (
 
 SUPPORTED_FILES = ["requirements.txt", "Pipfile", "pyproject.toml", "setup.py"]
 PYPYI_URL = "https://pypi.python.org/pypi"
+COLUMNS = ["Name", "Meta", "Classifier"]
 
 
 def is_valid_git_remote(project):
@@ -86,7 +87,6 @@ def chunker_list(seq, size):
 
 
 def worker(chunk):
-    columns = ["Name", "Meta", "Classifier"]
     records = []
     for d in chunk:
         if not d:
@@ -105,8 +105,7 @@ def worker(chunk):
             continue
 
         meta = output.get("license", "")
-        if meta:
-            record.append(meta.strip())
+        record.append(meta.strip())
 
         license_class = ""
         classifier = output.get("classifiers", "")
@@ -115,7 +114,7 @@ def worker(chunk):
                 license_class = "::".join([x.strip() for x in c.split("::")[1:]])
         record.append(license_class)
 
-        records.append(dict(zip(columns, record)))
+        records.append(dict(zip(COLUMNS, record)))
 
     return records
 
@@ -197,16 +196,14 @@ def run():
 
     else:
         rows = []
-        columns = []
         for r in results:
             rows.append(list(r.values()))
-            columns = list(r.keys())
         if fmt == "csv":
-            output += ",".join(columns) + "\n"
+            output += ",".join(COLUMNS) + "\n"
             for row in rows:
                 output += ",".join(row) + "\n"
         else:
-            output = tabulate(rows, columns, tablefmt=fmt)
+            output = tabulate(rows, COLUMNS, tablefmt=fmt)
 
     if not check:
         print(output, end="\n")
