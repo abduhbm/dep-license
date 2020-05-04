@@ -14,7 +14,7 @@ $ pip install dep_license
 $ deplic --help
 usage: deplic [-h] [-p PROCESSES] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
               [-c CHECK] [-v]
-              PROJECT
+              PROJECT [PROJECT ...]
 
 positional arguments:
   PROJECT               path to project or its GIT repo
