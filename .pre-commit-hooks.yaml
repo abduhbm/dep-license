@@ -5,4 +5,4 @@
   language: python
   require_serial: true
   types: [text]
-  files: (requirements.*\.txt$|setup.py$|Pipfile$)
+  files: (requirements.*\.txt$|setup.py$|Pipfile$|pyproject.toml$)
