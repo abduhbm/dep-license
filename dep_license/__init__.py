@@ -20,7 +20,13 @@ __version__ = (
     .strip()
 )
 
-SUPPORTED_FILES = ["requirements.txt", "Pipfile", "pyproject.toml", "setup.py"]
+SUPPORTED_FILES = [
+    "requirements.txt",
+    "Pipfile",
+    "Pipfile.lock",
+    "pyproject.toml",
+    "setup.py",
+]
 PYPYI_URL = "https://pypi.python.org/pypi"
 COLUMNS = ["Name", "Meta", "Classifier"]
 

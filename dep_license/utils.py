@@ -4,6 +4,8 @@ import sys
 import os
 import pkg_resources
 import toml
+import json
+from collections import OrderedDict
 
 # for pip >= 10
 try:
@@ -21,6 +23,9 @@ def parse_file(input_file, base_name, dev=False):
         if base_name == "Pipfile":
             return parse_pip_file(input_file, dev=dev)
 
+        elif base_name == "Pipfile.lock":
+            return parse_pip_lock_file(input_file, dev=dev)
+
         elif base_name == "setup.py":
             return parse_setup_file(input_file)
 
@@ -30,7 +35,7 @@ def parse_file(input_file, base_name, dev=False):
         else:
             return parse_req_file(input_file)
     except Exception as e:
-        logger.error(e)
+        logger.error(f"{base_name}: {e}")
         return []
 
 
@@ -48,6 +53,20 @@ def parse_pip_file(input_file, dev=False):
     output += list(cf.get("packages", {}).keys())
     if dev:
         output += list(cf.get("dev-packages", {}).keys())
+    return output
+
+
+def parse_pip_lock_file(input_file, dev=False):
+    output = []
+    r_type = ["default"]
+    if dev:
+        r_type.append("develop")
+    with open(input_file, "r") as f:
+        cf = json.load(f, object_pairs_hook=OrderedDict)
+    if cf:
+        for t in r_type:
+            output.extend(list(cf[t].keys()))
+
     return output
 
 
