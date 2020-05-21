@@ -26,6 +26,7 @@ SUPPORTED_FILES = [
     "Pipfile.lock",
     "pyproject.toml",
     "setup.py",
+    "conda.yaml",
 ]
 PYPYI_URL = "https://pypi.python.org/pypi"
 COLUMNS = ["Name", "Meta", "Classifier"]

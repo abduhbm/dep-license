@@ -5,6 +5,7 @@ import os
 import pkg_resources
 import toml
 import json
+import yaml
 from collections import OrderedDict
 
 # for pip >= 10
@@ -31,6 +32,9 @@ def parse_file(input_file, base_name, dev=False):
 
         elif base_name == "pyproject.toml":
             return parse_pyproject_file(input_file)
+
+        elif base_name == "conda.yaml":
+            return parse_conda_yaml_file(input_file)
 
         else:
             return parse_req_file(input_file)
@@ -104,4 +108,20 @@ def parse_setup_file(input_file):
                 output.append(i.project_name)
 
     os.chdir(cur_dir)
+    return output
+
+
+def parse_conda_yaml_file(input_file):
+    output = []
+    with open(input_file, "r") as f:
+        cf = yaml.safe_load(f)
+    if cf and "dependencies" in cf and isinstance(cf["dependencies"], list):
+        reqs = []
+        for r in cf["dependencies"]:
+            if isinstance(r, dict) and "pip" in r:
+                for i in r["pip"]:
+                    reqs.append(i)
+        for i in pkg_resources.parse_requirements(reqs):
+            output.append(i.project_name)
+
     return output
