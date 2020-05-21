@@ -1,7 +1,8 @@
 # dep_license
 
 **dep_lic**: a simple utility to report licenses information for dependencies in use by a Python project. It supports
-parsing contents from `setup.py`, `pyproject.toml`, `requirements.txt`, `Pipfile` and `Pipfile.lock` files from the project directory or its GIT repo.
+parsing contents from `setup.py`, `setup.cfg`, `pyproject.toml`, `requirements.txt`, `Pipfile` and `Pipfile.lock` files from the project directory or its GIT repo.
+
 
 ### Installation
 
