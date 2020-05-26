@@ -3,7 +3,7 @@
 **dep_lic**: a simple utility to report licenses information for dependencies in use by a Python project. It supports
 parsing contents from `setup.py`, `setup.cfg`, `pyproject.toml`, `requirements.txt`, `Pipfile`, `Pipfile.lock`
 and `conda.yaml` files
-from the project directory or its GIT repo.
+from the project directory, its `git` repo, or its selected `virtualenv` path.
 
 
 ### Installation
@@ -17,7 +17,7 @@ $ pip install dep_license
 ```
 $ deplic --help
 usage: deplic [-h] [-p PROCESSES] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
-              [-c CHECK] [-v]
+              [-c CHECK] [-e] [-v]
               PROJECT [PROJECT ...]
 
 positional arguments:
@@ -36,6 +36,8 @@ optional arguments:
   -c CHECK, --check CHECK
                         path to a configuration file to check against banned
                         licenses (default: None)
+  -e, --env             check against selected virtual environment in PROJECT
+                        (default: False)
   -v, --version         show program's version number and exit
 ```
 
@@ -75,6 +77,18 @@ Found dependencies: 3
 | numpy      | BSD    | OSI Approved                                     |
 | pandas     | BSD    |                                                  |
 | matplotlib | PSF    | OSI Approved::Python Software Foundation License |
+```
+
+Report from selected `virtualenv` path:
+```
+deplic $VIRTUAL_ENV --env
+Found dependencies: 3
+
+| Name               | Meta                                 | Classifier                                       |
+|--------------------|--------------------------------------|--------------------------------------------------|
+| smmap              | BSD                                  | OSI Approved::BSD License                        |
+| tabulate           | MIT                                  | OSI Approved::MIT License                        |
+| six                | MIT                                  | OSI Approved::MIT License                        |
 ```
 
 Format and store output as JSON file:

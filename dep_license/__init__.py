@@ -9,6 +9,7 @@ import json
 from urllib.request import urlopen
 import multiprocessing as mp
 from tabulate import tabulate
+import subprocess
 
 from dep_license.utils import parse_file
 
@@ -75,6 +76,13 @@ def get_params():
         default=None,
         help="path to a configuration file to check against banned licenses",
     )
+    parser.add_argument(
+        "-e",
+        "--env",
+        action="store_true",
+        default=False,
+        help="check against selected virtual environment in PROJECT",
+    )
     parser.add_argument("-v", "--version", action="version", version=__version__)
 
     args = parser.parse_args()
@@ -85,8 +93,9 @@ def get_params():
     dev = args.dev
     name = args.name
     check = args.check
+    env = args.env
 
-    return project, np, fmt, output, dev, name, check
+    return project, np, fmt, output, dev, name, check, env
 
 
 def chunker_list(seq, size):
@@ -127,7 +136,7 @@ def worker(chunk):
 
 
 def run():
-    projects, np, fmt, output_file, dev, name, check = get_params()
+    projects, np, fmt, output_file, dev, name, check, env = get_params()
     if name:
         req_files = [name]
     else:
@@ -136,7 +145,22 @@ def run():
     dependencies = []
 
     for project in projects:
-        if os.path.isdir(os.path.abspath(project)):
+        if env:
+            pip_command = os.path.join(os.path.abspath(project), "bin/pip")
+            if not os.path.isfile(pip_command):
+                logger.error(f"{project} is invalid virtualenv path.")
+                continue
+            try:
+                out = subprocess.check_output([pip_command, "freeze"])
+                if out:
+                    with tempfile.NamedTemporaryFile() as f:
+                        f.write(out)
+                        f.seek(0)
+                        dependencies += parse_file(f.name, "requirements.txt", dev=dev)
+            except Exception:
+                pass
+
+        elif os.path.isdir(os.path.abspath(project)):
             project = os.path.abspath(project)
             for f in req_files:
                 filename = os.path.join(project, f)

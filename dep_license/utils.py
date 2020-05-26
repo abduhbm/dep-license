@@ -8,14 +8,6 @@ import json
 import yaml
 from collections import OrderedDict
 
-# for pip >= 10
-try:
-    from pip._internal.req import parse_requirements
-
-# for pip <= 9.0.3
-except ImportError:
-    from pip.req import parse_requirements
-
 logger = logging.getLogger("__name__")
 
 
@@ -45,8 +37,10 @@ def parse_file(input_file, base_name, dev=False):
 
 def parse_req_file(input_file):
     output = []
-    for r in parse_requirements(input_file, session="hack"):
-        output.append(r.name)
+    with open(input_file) as f:
+        lines = [l for l in f.readlines() if not l.startswith("-")]
+        for r in pkg_resources.parse_requirements(lines):
+            output.append(r.name)
 
     return output
 
