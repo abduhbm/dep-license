@@ -1,10 +1,18 @@
 # dep_license
 
-**dep_lic**: a simple utility to report licenses information for dependencies in use by a Python project. It supports
-parsing contents from `setup.py`, `setup.cfg`, `pyproject.toml`, `requirements.txt`, `Pipfile`, `Pipfile.lock`
-and `conda.yaml` files
-from the project directory, its `git` repo, or its selected `virtualenv` path.
+**dep_license (deplic)**: a simple utility to report licenses information for dependencies in use by a Python project.
 
+deplic supports reporting dependencies from local project directories, local / remote `git` repos,
+or selected virtual environment paths.
+
+Supported dependency files:
+* `setup.py`
+* `setup.cfg`
+* `requirements.txt`
+* `pyproject.toml`
+* `Pipfile`
+* `Pipfile.lock`
+* `conda.yaml`
 
 ### Installation
 
