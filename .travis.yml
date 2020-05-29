@@ -7,10 +7,9 @@ matrix:
             python: 3.7
         -   env: TOXENV=py38
             python: 3.8
+        -   env: TOXENV=pre-commit
+            python: 3.6
 install:
-  - pip install tox-travis
-  - pip install codecov
+  - pip install tox
 script:
   - tox
-after_success:
-  - codecov
