@@ -1,10 +1,9 @@
 [tox]
-envlist = py36,py37,py38,pypy,pre-commit
+envlist = py36,py37,py38,pre-commit
 tox_pip_extensions_ext_venv_update = true
 
 [testenv]
 deps = -rrequirements-dev.txt
-extras = license
 commands =
     pytest
 
