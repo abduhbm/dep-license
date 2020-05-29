@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import io
 import os
 import sys
 from shutil import rmtree
 
-from setuptools import setup, Command, find_packages
+from setuptools import Command
+from setuptools import find_packages
+from setuptools import setup
 
 NAME = "dep_license"
 DESCRIPTION = "Report licenses information for dependencies in use by a Python project"
@@ -76,9 +77,10 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Utilities",
         "Topic :: System :: System Shells",
     ],
