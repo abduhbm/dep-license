@@ -24,7 +24,7 @@ $ pip install dep_license
 
 ```
 $ deplic --help
-usage: deplic [-h] [-p PROCESSES] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
+usage: deplic [-h] [-w WORKERS] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
               [-c CHECK] [-e] [-v]
               PROJECT [PROJECT ...]
 
@@ -33,14 +33,14 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -p PROCESSES, --processes PROCESSES
-                        number of processes to run in parallel (default: MAX)
+  -w WORKERS, --workers WORKERS
+                        number of workers to run in parallel (default: 5)
   -f FORMAT, --format FORMAT
                         define how result is formatted (default: github)
   -o OUTPUT, --output OUTPUT
                         path for output file (default: None)
   -d, --dev             include dev packages from Pipfile (default: False)
-  -n NAME, --name NAME  name for pip-requirements file (default: None)
+  -n NAME, --name NAME  name for dependency file (default: None)
   -c CHECK, --check CHECK
                         path to a configuration file to check against banned
                         licenses (default: None)
