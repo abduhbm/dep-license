@@ -1,12 +1,13 @@
+import json
 import logging
-import distutils
-import sys
 import os
+import sys
+from collections import OrderedDict
+from distutils.core import run_setup
+
 import pkg_resources
 import toml
-import json
 import yaml
-from collections import OrderedDict
 
 logger = logging.getLogger("__name__")
 
@@ -38,7 +39,7 @@ def parse_file(input_file, base_name, dev=False):
 def parse_req_file(input_file):
     output = []
     with open(input_file) as f:
-        lines = [l for l in f.readlines() if not l.startswith("-")]
+        lines = [x for x in f.readlines() if not x.startswith("-")]
         for r in pkg_resources.parse_requirements(lines):
             output.append(r.name)
 
@@ -84,8 +85,9 @@ def parse_setup_file(input_file):
     sys.path.append(setup_dir)
     os.chdir(setup_dir)
     try:
-        setup = distutils.core.run_setup(input_file, stop_after="config")
-    except Exception:
+        setup = run_setup(input_file, stop_after="config")
+    except Exception as e:
+        logger.error(f"run_setup: {e}")
         return []
 
     reqs_var = ["install_requires", "setup_requires", "extras_require"]

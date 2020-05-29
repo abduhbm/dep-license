@@ -1,15 +1,16 @@
 #!/usr/bin/env python
-
+import argparse
+import concurrent.futures
+import json
 import logging
 import os
-import tempfile
-import argparse
-import git
-import json
-from urllib.request import urlopen
-import multiprocessing as mp
-from tabulate import tabulate
 import subprocess
+import tempfile
+import warnings
+from urllib.request import urlopen
+
+import git
+from tabulate import tabulate
 
 from dep_license.utils import parse_file
 
@@ -40,21 +41,17 @@ def is_valid_git_remote(project):
     try:
         g.ls_remote(project).split("\n")
         return True
-    except Exception as e:
-        logger.error(e)
+    except Exception:
         return False
 
 
-def get_params():
+def get_params(argv=None):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("PROJECT", nargs="+", help="path to project or its GIT repo")
     parser.add_argument(
-        "-p",
-        "--processes",
-        default="MAX",
-        help="number of processes to run in parallel",
+        "-w", "--workers", default=5, help="number of workers to run in parallel"
     )
     parser.add_argument(
         "-f", "--format", default="github", help="define how result is formatted"
@@ -67,9 +64,7 @@ def get_params():
         default=False,
         help="include dev packages from Pipfile",
     )
-    parser.add_argument(
-        "-n", "--name", default=None, help="name for pip-requirements file"
-    )
+    parser.add_argument("-n", "--name", default=None, help="name for dependency file")
     parser.add_argument(
         "-c",
         "--check",
@@ -85,9 +80,9 @@ def get_params():
     )
     parser.add_argument("-v", "--version", action="version", version=__version__)
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     project = args.PROJECT
-    np = args.processes
+    w = args.workers
     fmt = args.format
     output = args.output
     dev = args.dev
@@ -95,48 +90,44 @@ def get_params():
     check = args.check
     env = args.env
 
-    return project, np, fmt, output, dev, name, check, env
+    return project, w, fmt, output, dev, name, check, env
 
 
 def chunker_list(seq, size):
     return (seq[i::size] for i in range(size))
 
 
-def worker(chunk):
-    records = []
-    for d in chunk:
-        if not d:
-            continue
-        d = d.replace('"', "")
-        d = d.replace("'", "")
-        record = [d]
-        r = urlopen("{}/{}/json".format(PYPYI_URL, d))
-        if r.status != 200:
-            logger.warning(f"not license info found for {d}")
-            continue
-        try:
-            output = json.loads(r.read().decode()).get("info")
-        except Exception:
-            logger.warning(f"invalid json file for {d}")
-            continue
+def worker(d):
+    d = d.replace('"', "")
+    d = d.replace("'", "")
+    record = [d]
+    try:
+        with urlopen("{}/{}/json".format(PYPYI_URL, d)) as conn:
+            output = json.loads(conn.read().decode()).get("info")
 
-        meta = output.get("license", "")
-        record.append(meta.strip())
+    except Exception:
+        logger.warning(f"{d}: error in fetching pypi metadata")
+        return None
 
-        license_class = ""
-        classifier = output.get("classifiers", "")
-        for c in classifier:
-            if c.startswith("License"):
-                license_class = "::".join([x.strip() for x in c.split("::")[1:]])
-        record.append(license_class)
+    meta = output.get("license", "")
+    record.append(meta.strip())
 
-        records.append(dict(zip(COLUMNS, record)))
+    license_class = ""
+    classifier = output.get("classifiers", "")
+    for c in classifier:
+        if c.startswith("License"):
+            license_class = "::".join([x.strip() for x in c.split("::")[1:]])
+    record.append(license_class)
 
-    return records
+    return dict(zip(COLUMNS, record))
 
 
-def run():
-    projects, np, fmt, output_file, dev, name, check, env = get_params()
+def run(argv=None):
+    warnings.simplefilter("ignore", UserWarning)
+
+    projects, max_workers, fmt, output_file, dev, name, check, env = get_params(argv)
+    return_val = 0
+
     if name:
         req_files = [name]
     else:
@@ -190,33 +181,29 @@ def run():
 
     dependencies = list(set(dependencies))
     if len(dependencies) == 0:
-        logger.error("no dependencies found")
-        exit(1)
-
-    if np == "MAX":
-        cpu_count = mp.cpu_count()
-    else:
-        cpu_count = int(np)
-
-    if len(dependencies) < cpu_count:
-        cpu_count = len(dependencies)
+        print("no dependencies found")
+        return 1
 
     print("Found dependencies: {}\n".format(len(dependencies)))
-    logger.debug("Running with {} processes ...".format(cpu_count))
-
-    chunks = chunker_list(dependencies, cpu_count)
-    pool = mp.Pool(cpu_count)
-    procs = pool.map(worker, chunks)
-    pool.terminate()
-    pool.close()
+    logger.debug("Running with {} workers ...".format(max_workers))
 
     results = []
-    for p in procs:
-        results += p
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_worker = {executor.submit(worker, x): x for x in dependencies}
+        for future in concurrent.futures.as_completed(future_to_worker):
+            dependency = future_to_worker[future]
+            try:
+                data = future.result()
+            except Exception as e:
+                logger.error(f"{dependency}: {e}")
+                continue
+            else:
+                if data:
+                    results.append(data)
 
     if len(results) == 0:
         logger.error("no license information found")
-        exit(1)
+        return 1
 
     output = ""
     fmt = fmt.lower()
@@ -249,11 +236,9 @@ def run():
         import configparser
         from difflib import get_close_matches
 
-        return_val = 0
-
         if not os.path.isfile(check):
             logger.error("configuration file not found")
-            exit(1)
+            return 1
         config = configparser.ConfigParser()
         config.read(check)
         try:
@@ -263,7 +248,7 @@ def run():
 
         if banned_licenses:
             banned_licenses = banned_licenses.split(",")
-            banned_licenses = [l.lower() for l in banned_licenses]
+            banned_licenses = [x.lower() for x in banned_licenses]
             for r in results:
                 name = r.get("Name")
                 meta = r.get("Meta")
@@ -276,4 +261,4 @@ def run():
                     )
                     return_val = 1
 
-            exit(return_val)
+    return return_val
