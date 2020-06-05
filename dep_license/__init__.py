@@ -159,7 +159,7 @@ def run(argv=None):
             else:
                 py_exec = os.path.join(os.path.abspath(project), "bin/python")
             if not os.path.isfile(py_exec):
-                logger.error(f"{project} is invalid virtualenv path.")
+                logger.error(f"{py_exec} is invalid virtualenv python executable.")
                 continue
             try:
                 out = subprocess.check_output([py_exec, "-m", "pip", "freeze"])
