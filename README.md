@@ -2,7 +2,7 @@ dep_license
 ===========
 
 [![Build Status](https://travis-ci.com/abduhbm/dep-license.svg?branch=master)](https://travis-ci.com/abduhbm/dep-license)
-![Windows CI](https://github.com/abduhbm/dep-license/workflows/Windows%20CI/badge.svg?branch=master)
+[![Windows CI](https://github.com/abduhbm/dep-license/workflows/Windows%20CI/badge.svg?branch=master)](https://github.com/abduhbm/dep-license/actions?query=workflow%3A%22Windows+CI%22)
 
 **dep_license (deplic)**: a simple utility to report licenses information for dependencies in use by a Python project.
 
