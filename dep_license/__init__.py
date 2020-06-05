@@ -157,7 +157,7 @@ def run(argv=None):
             try:
                 out = subprocess.check_output([project, "-m", "pip", "freeze"])
                 if out:
-                    with tempfile.NamedTemporaryFile() as f:
+                    with tempfile.NamedTemporaryFile(mode="w") as f:
                         f.write(out)
                         f.seek(0)
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
