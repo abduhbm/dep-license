@@ -48,7 +48,7 @@ optional arguments:
   -c CHECK, --check CHECK
                         path to a configuration file to check against banned
                         licenses (default: None)
-  -e, --env             check against selected virtual environment in PROJECT
+  -e, --env             check against selected Python interpreter environment in PROJECT
                         (default: False)
   -v, --version         show program's version number and exit
 ```
