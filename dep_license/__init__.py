@@ -4,7 +4,9 @@ import concurrent.futures
 import json
 import logging
 import os
+import stat
 import subprocess
+import sys
 import tempfile
 import warnings
 from shutil import rmtree
@@ -182,18 +184,20 @@ def run(argv=None):
                 dependencies += parse_file(project, filename, dev=dev)
 
         elif is_valid_git_remote(project):
-            try:
-                temp_dir = tempfile.mkdtemp()
-                git.Git(temp_dir).clone(project)
-                dir_name = os.path.join(
-                    temp_dir, project.rsplit("/", 1)[-1].split(".")[0]
-                )
-                for f in req_files:
-                    f_name = os.path.join(dir_name, f)
-                    if os.path.isfile(f_name):
-                        dependencies += parse_file(f_name, f, dev=dev)
-            finally:
-                rmtree(temp_dir)
+            temp_dir = tempfile.TemporaryDirectory()
+            git.Git(temp_dir.name).clone(project)
+            dir_name = os.path.join(
+                temp_dir.name, project.rsplit("/", 1)[-1].split(".")[0]
+            )
+            for f in req_files:
+                f_name = os.path.join(dir_name, f)
+                if os.path.isfile(f_name):
+                    dependencies += parse_file(f_name, f, dev=dev)
+            if sys.platform.startswith("win"):
+                os.chmod(temp_dir.name, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+                rmtree(temp_dir.name)
+            else:
+                temp_dir.cleanup()
 
         else:
             logger.error(f"{project} is invalid project.")
