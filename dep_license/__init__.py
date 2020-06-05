@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 import warnings
+from shutil import rmtree
 from urllib.request import urlopen
 
 import git
@@ -157,8 +158,8 @@ def run(argv=None):
             try:
                 out = subprocess.check_output([project, "-m", "pip", "freeze"])
                 if out:
-                    f = tempfile.NamedTemporaryFile(delete=False)
                     try:
+                        f = tempfile.NamedTemporaryFile(delete=False)
                         f.write(out)
                         f.close()
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
@@ -181,16 +182,18 @@ def run(argv=None):
                 dependencies += parse_file(project, filename, dev=dev)
 
         elif is_valid_git_remote(project):
-            temp_dir = tempfile.TemporaryDirectory()
-            git.Git(temp_dir.name).clone(project)
-            dir_name = os.path.join(
-                temp_dir.name, project.rsplit("/", 1)[-1].split(".")[0]
-            )
-            for f in req_files:
-                f_name = os.path.join(dir_name, f)
-                if os.path.isfile(f_name):
-                    dependencies += parse_file(f_name, f, dev=dev)
-            temp_dir.cleanup()
+            try:
+                temp_dir = tempfile.mkdtemp()
+                git.Git(temp_dir).clone(project)
+                dir_name = os.path.join(
+                    temp_dir, project.rsplit("/", 1)[-1].split(".")[0]
+                )
+                for f in req_files:
+                    f_name = os.path.join(dir_name, f)
+                    if os.path.isfile(f_name):
+                        dependencies += parse_file(f_name, f, dev=dev)
+            finally:
+                rmtree(temp_dir)
 
         else:
             logger.error(f"{project} is invalid project.")
