@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import tempfile
 import warnings
 from urllib.request import urlopen
@@ -151,7 +152,12 @@ def run(argv=None):
 
     for project in projects:
         if env:
-            pip_command = os.path.join(os.path.abspath(project), "bin/pip")
+            if sys.platform.startswith("win"):
+                pip_command = os.path.join(
+                    os.path.abspath(project), "Scripts", "pip.exe"
+                )
+            else:
+                pip_command = os.path.join(os.path.abspath(project), "bin/pip")
             if not os.path.isfile(pip_command):
                 logger.error(f"{project} is invalid virtualenv path.")
                 continue
