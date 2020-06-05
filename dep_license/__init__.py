@@ -4,10 +4,12 @@ import concurrent.futures
 import json
 import logging
 import os
+import stat
 import subprocess
 import sys
 import tempfile
 import warnings
+from shutil import rmtree
 from urllib.request import urlopen
 
 import git
@@ -46,6 +48,16 @@ def is_valid_git_remote(project):
         return False
 
 
+def readonly_handler(func, path, execinfo):
+    """
+        Work-around for python problem with shutils tree remove functions on Windows.
+        See:
+            https://stackoverflow.com/questions/23924223
+        """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 def get_params(argv=None):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -77,7 +89,7 @@ def get_params(argv=None):
         "--env",
         action="store_true",
         default=False,
-        help="check against selected virtual environment in PROJECT",
+        help="check against selected python executable",
     )
     parser.add_argument("-v", "--version", action="version", version=__version__)
 
@@ -152,24 +164,21 @@ def run(argv=None):
 
     for project in projects:
         if env:
-            if sys.platform.startswith("win"):
-                pip_command = os.path.join(
-                    os.path.abspath(project), "Scripts", "pip.exe"
-                )
-            else:
-                pip_command = os.path.join(os.path.abspath(project), "bin/pip")
-            if not os.path.isfile(pip_command):
-                logger.error(f"{project} is invalid virtualenv path.")
+            if not os.path.isfile(project):
+                logger.error(f"{project} is invalid python executable.")
                 continue
             try:
-                out = subprocess.check_output([pip_command, "freeze"])
+                out = subprocess.check_output([project, "-m", "pip", "freeze"])
                 if out:
-                    with tempfile.NamedTemporaryFile() as f:
+                    try:
+                        f = tempfile.NamedTemporaryFile(delete=False)
                         f.write(out)
-                        f.seek(0)
+                        f.close()
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
-            except Exception as e:
-                raise e
+                    finally:
+                        os.remove(f.name)
+            except Exception:
+                logger.error(f"{project}: error in freezing dependencies.")
 
         elif os.path.isdir(os.path.abspath(project)):
             project = os.path.abspath(project)
@@ -194,7 +203,10 @@ def run(argv=None):
                 f_name = os.path.join(dir_name, f)
                 if os.path.isfile(f_name):
                     dependencies += parse_file(f_name, f, dev=dev)
-            temp_dir.cleanup()
+            if sys.platform.startswith("win"):
+                rmtree(temp_dir.name, onerror=readonly_handler)
+            else:
+                temp_dir.cleanup()
 
         else:
             logger.error(f"{project} is invalid project.")

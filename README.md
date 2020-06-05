@@ -92,7 +92,7 @@ Found dependencies: 3
 
 Report from selected `virtualenv` path:
 ```
-deplic $VIRTUAL_ENV --env
+deplic $VIRTUAL_ENV/bin/python --env
 Found dependencies: 3
 
 | Name               | Meta                                 | Classifier                                       |

@@ -71,7 +71,7 @@ def test_check_banned(tmpdir, capsys):
 
 
 def test_check_env(capsys):
-    ret = run([os.path.dirname(os.path.dirname(sys.executable)), "-e"])
+    ret = run([sys.executable, "-e"])
     out, _ = capsys.readouterr()
     assert ret == 0
     assert "Found" in out
