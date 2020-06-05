@@ -24,6 +24,13 @@ def test_local_dir(capsys):
     assert "Found" in out
 
 
+def test_local_file(capsys):
+    ret = run([os.path.join(project, "requirements.txt")])
+    out, _ = capsys.readouterr()
+    assert ret == 0
+    assert "Found" in out
+
+
 def test_format(capsys):
     ret = run([project, "-f", "json"])
     out, _ = capsys.readouterr()
@@ -68,6 +75,12 @@ def test_check_env(capsys):
     out, _ = capsys.readouterr()
     assert ret == 0
     assert "Found" in out
+
+
+def test_check_invalid_env(capsys):
+    ret = run([os.path.dirname("/invalid/venv/path"), "-e"])
+    out, _ = capsys.readouterr()
+    assert ret == 1
 
 
 def test_with_remote_git_repo(capsys):

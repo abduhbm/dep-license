@@ -26,7 +26,7 @@ def parse_file(input_file, base_name, dev=False):
         elif base_name == "pyproject.toml":
             return parse_pyproject_file(input_file)
 
-        elif base_name == "conda.yaml":
+        elif base_name == "conda.yml":
             return parse_conda_yaml_file(input_file)
 
         else:
@@ -102,7 +102,6 @@ def parse_setup_file(input_file):
                 {v for req in reqs.values() for v in req}
             ):
                 output.append(i.project_name)
-
     os.chdir(cur_dir)
     return output
 

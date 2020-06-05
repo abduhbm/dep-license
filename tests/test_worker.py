@@ -1,5 +1,6 @@
 import pytest
 
+from dep_license import start_concurrent
 from dep_license import worker
 
 
@@ -19,3 +20,14 @@ from dep_license import worker
 )
 def test_worker(dependency, expected):
     assert worker(dependency) == expected
+
+
+def test_concurrent_workers():
+    results = start_concurrent(["dep_license", "SomethingElseThatDoesntExist"])
+    assert results == [
+        {
+            "Name": "dep_license",
+            "Meta": "MIT",
+            "Classifier": "OSI Approved::MIT License",
+        }
+    ]

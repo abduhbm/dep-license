@@ -28,7 +28,7 @@ SUPPORTED_FILES = [
     "Pipfile.lock",
     "pyproject.toml",
     "setup.py",
-    "conda.yaml",
+    "conda.yml",
 ]
 PYPYI_URL = "https://pypi.python.org/pypi"
 COLUMNS = ["Name", "Meta", "Classifier"]
@@ -93,10 +93,6 @@ def get_params(argv=None):
     return project, w, fmt, output, dev, name, check, env
 
 
-def chunker_list(seq, size):
-    return (seq[i::size] for i in range(size))
-
-
 def worker(d):
     d = d.replace('"', "")
     d = d.replace("'", "")
@@ -120,6 +116,24 @@ def worker(d):
     record.append(license_class)
 
     return dict(zip(COLUMNS, record))
+
+
+def start_concurrent(dependencies, max_workers=5):
+    results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_worker = {executor.submit(worker, x): x for x in dependencies}
+        for future in concurrent.futures.as_completed(future_to_worker):
+            dependency = future_to_worker[future]
+            try:
+                data = future.result()
+            except Exception as e:  # pragma: no cover
+                logger.error(f"{dependency}: {e}")
+                continue
+            else:
+                if data:
+                    results.append(data)
+
+    return results
 
 
 def run(argv=None):
@@ -148,8 +162,8 @@ def run(argv=None):
                         f.write(out)
                         f.seek(0)
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
-            except Exception:
-                pass
+            except Exception as e:
+                raise e
 
         elif os.path.isdir(os.path.abspath(project)):
             project = os.path.abspath(project)
@@ -187,20 +201,7 @@ def run(argv=None):
     print("Found dependencies: {}\n".format(len(dependencies)))
     logger.debug("Running with {} workers ...".format(max_workers))
 
-    results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_worker = {executor.submit(worker, x): x for x in dependencies}
-        for future in concurrent.futures.as_completed(future_to_worker):
-            dependency = future_to_worker[future]
-            try:
-                data = future.result()
-            except Exception as e:
-                logger.error(f"{dependency}: {e}")
-                continue
-            else:
-                if data:
-                    results.append(data)
-
+    results = start_concurrent(dependencies, max_workers=max_workers)
     if len(results) == 0:
         logger.error("no license information found")
         return 1

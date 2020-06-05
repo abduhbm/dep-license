@@ -1,3 +1,5 @@
+import pytest
+
 from dep_license import utils
 
 
@@ -80,10 +82,10 @@ def test_parsing_setup_file(tmpdir):
     x = tmpdir.join("setup.py")
     x.write(
         "from setuptools import setup, find_packages\n"
-        'REQUIRED = ["tabulate", "GitPython", "toml"]\n'
+        'REQUIRED = ["tabulate", "numpy", "toml"]\n'
         'setup(name="foo", version="1.0", install_requires=REQUIRED)'
     )
-    assert utils.parse_setup_file(x.strpath) == ["tabulate", "GitPython", "toml"]
+    assert utils.parse_setup_file(x.strpath) == ["tabulate", "numpy", "toml"]
 
 
 def test_parsing_pyproject_file(tmpdir):
@@ -98,7 +100,7 @@ def test_parsing_pyproject_file(tmpdir):
 
 
 def test_parsing_conda_yaml_file(tmpdir):
-    x = tmpdir.join("conda.yaml")
+    x = tmpdir.join("conda.yml")
     x.write(
         """
         name: hyperparam_example
@@ -114,3 +116,13 @@ def test_parsing_conda_yaml_file(tmpdir):
         """
     )
     assert utils.parse_conda_yaml_file(x.strpath) == ["numpy", "pandas"]
+
+
+@pytest.mark.parametrize(
+    "f", ("requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock", "conda.yml")
+)
+def test_passing_dependency_file(f, tmpdir):
+    x = tmpdir.join(f)
+    x.write(" ")
+    r = utils.parse_file(x.strpath, f)
+    assert r == []
