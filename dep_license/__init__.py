@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import subprocess
-import sys
 import tempfile
 import warnings
 from urllib.request import urlopen
@@ -77,7 +76,7 @@ def get_params(argv=None):
         "--env",
         action="store_true",
         default=False,
-        help="check against selected virtual environment in PROJECT",
+        help="check against selected python executable",
     )
     parser.add_argument("-v", "--version", action="version", version=__version__)
 
@@ -152,25 +151,18 @@ def run(argv=None):
 
     for project in projects:
         if env:
-            if sys.platform.startswith("win"):
-                py_exec = os.path.join(
-                    os.path.abspath(project), "Scripts", "python.exe"
-                )
-            else:
-                py_exec = os.path.join(os.path.abspath(project), "bin/python")
-            if not os.path.isfile(py_exec):
-                logger.error(f"{py_exec} is invalid virtualenv python executable.")
-                logger.error(f"{sys.executable}")
+            if not os.path.isfile(project):
+                logger.error(f"{project} is invalid python executable.")
                 continue
             try:
-                out = subprocess.check_output([py_exec, "-m", "pip", "freeze"])
+                out = subprocess.check_output([project, "-m", "pip", "freeze"])
                 if out:
                     with tempfile.NamedTemporaryFile() as f:
                         f.write(out)
                         f.seek(0)
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
-            except Exception as e:
-                raise e
+            except Exception:
+                logger.error(f"{project}: error in freezing dependencies.")
 
         elif os.path.isdir(os.path.abspath(project)):
             project = os.path.abspath(project)
