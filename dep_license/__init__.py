@@ -157,10 +157,13 @@ def run(argv=None):
             try:
                 out = subprocess.check_output([project, "-m", "pip", "freeze"])
                 if out:
-                    with tempfile.NamedTemporaryFile(mode="w") as f:
+                    f = tempfile.NamedTemporaryFile(delete=False)
+                    try:
                         f.write(out)
-                        f.seek(0)
+                        f.close()
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
+                    finally:
+                        os.remove(f.name)
             except Exception:
                 logger.error(f"{project}: error in freezing dependencies.")
 
