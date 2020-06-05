@@ -48,6 +48,16 @@ def is_valid_git_remote(project):
         return False
 
 
+def readonly_handler(func, path, execinfo):
+    """
+        Work-around for python problem with shutils tree remove functions on Windows.
+        See:
+            https://stackoverflow.com/questions/23924223
+        """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 def get_params(argv=None):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -194,8 +204,7 @@ def run(argv=None):
                 if os.path.isfile(f_name):
                     dependencies += parse_file(f_name, f, dev=dev)
             if sys.platform.startswith("win"):
-                os.chmod(temp_dir.name, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-                rmtree(temp_dir.name)
+                rmtree(temp_dir.name, onerror=readonly_handler)
             else:
                 temp_dir.cleanup()
 
