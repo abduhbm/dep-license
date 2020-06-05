@@ -153,16 +153,16 @@ def run(argv=None):
     for project in projects:
         if env:
             if sys.platform.startswith("win"):
-                pip_command = os.path.join(
-                    os.path.abspath(project), "Scripts", "pip.exe"
+                py_exec = os.path.join(
+                    os.path.abspath(project), "Scripts", "python.exe"
                 )
             else:
-                pip_command = os.path.join(os.path.abspath(project), "bin/pip")
-            if not os.path.isfile(pip_command):
+                py_exec = os.path.join(os.path.abspath(project), "bin/python")
+            if not os.path.isfile(py_exec):
                 logger.error(f"{project} is invalid virtualenv path.")
                 continue
             try:
-                out = subprocess.check_output([pip_command, "freeze"])
+                out = subprocess.check_output([py_exec, "-m", "pip", "freeze"])
                 if out:
                     with tempfile.NamedTemporaryFile() as f:
                         f.write(out)
