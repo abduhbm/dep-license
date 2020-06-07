@@ -27,7 +27,6 @@ $ pip install dep_license
 ### Command-Line Options
 
 ```
-$ deplic --help
 usage: deplic [-h] [-w WORKERS] [-f FORMAT] [-o OUTPUT] [-d] [-n NAME]
               [-c CHECK] [-e] [-v]
               PROJECT [PROJECT ...]
@@ -48,8 +47,8 @@ optional arguments:
   -c CHECK, --check CHECK
                         path to a configuration file to check against banned
                         licenses (default: None)
-  -e, --env             check against selected Python interpreter environment in PROJECT
-                        (default: False)
+  -e, --env             check against selected python executable (default:
+                        False)
   -v, --version         show program's version number and exit
 ```
 
