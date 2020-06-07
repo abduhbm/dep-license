@@ -175,6 +175,17 @@ BANNED: edx-opaque-keys with license AGPL-3.0
 BANNED: edx-rbac with license AGPL 3.0
 BANNED: edx-django-utils with license AGPL 3.0
 ```
+
+### Using dep-license in Docker
+```bash
+$ docker run -t -v $PWD:/stage abduh/dep-license deplic /stage
+Found dependencies: 1
+
+| Name         | Meta   | Classifier                |
+|--------------|--------|---------------------------|
+| editdistance |        | OSI Approved::MIT License |
+```
+
 ### Output Formats:
 
 Supported table formats are (thanks to python-tabulate package):
