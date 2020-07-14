@@ -163,10 +163,13 @@ $ more deplic.cfg
 ```
 ```ini
 [deplic]
-banned = AGPL
-# or comma separated values
-# banned = AGPL,....
+banned = AGPL-3.0
+# or multi-lines
+# banned =
+#     AGPL-3.0,
+#     ...
 ```
+
 ```
 $ deplic --check ./deplic.cfg https://github.com/edx/edx-enterprise
 

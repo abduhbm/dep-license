@@ -267,7 +267,8 @@ def run(argv=None):
 
         if banned_licenses:
             banned_licenses = banned_licenses.split(",")
-            banned_licenses = [x.lower() for x in banned_licenses]
+            banned_licenses = [x.lower().strip() for x in banned_licenses if x]
+            banned_licenses = list(set(banned_licenses))
             for r in results:
                 name = r.get("Name")
                 meta = r.get("Meta")
