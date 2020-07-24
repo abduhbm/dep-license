@@ -40,8 +40,12 @@ def parse_req_file(input_file):
     output = []
     with open(input_file) as f:
         lines = [x for x in f.readlines() if not x.startswith("-")]
-        for r in pkg_resources.parse_requirements(lines):
-            output.append(r.name)
+        for line in lines:
+            try:
+                for r in pkg_resources.parse_requirements(line):
+                    output.append(r.name)
+            except pkg_resources.RequirementParseError:
+                pass
 
     return output
 
