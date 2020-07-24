@@ -171,13 +171,12 @@ banned = AGPL-3.0
 ```
 
 ```
-$ deplic --check ./deplic.cfg https://github.com/edx/edx-enterprise
+$ deplic --check ./deplic.cfg /path/to/working/project
 
-BANNED: django-config-models with license AGPL 3.0
-BANNED: code-annotations with license AGPL 3.0
-BANNED: edx-opaque-keys with license AGPL-3.0
-BANNED: edx-rbac with license AGPL 3.0
-BANNED: edx-django-utils with license AGPL 3.0
+BANNED: edx-opaque-keys :: AGPL-3.0 - OSI Approved::GNU Affero General Public License v3
+BANNED: edx-rbac :: AGPL 3.0 - OSI Approved::GNU Affero General Public License v3 or later (AGPLv3+)
+BANNED: edx-django-utils :: AGPL 3.0 - OSI Approved::GNU Affero General Public License v3 or later (AGPLv3+)
+BANNED: django-config-models :: AGPL 3.0 - OSI Approved::GNU Affero General Public License v3 or later (AGPLv3+)
 ```
 
 ### Using dep-license in Docker
