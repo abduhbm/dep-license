@@ -81,6 +81,8 @@ def get_params(argv=None):
     parser.add_argument(
         "-c",
         "--check",
+        nargs="?",
+        const="setup.cfg",
         default=None,
         help="path to a configuration file to check against banned licenses",
     )
@@ -272,11 +274,20 @@ def run(argv=None):
             for r in results:
                 name = r.get("Name")
                 meta = r.get("Meta")
-                if get_close_matches(meta.lower(), banned_licenses):
+                classifier = r.get("Classifier")
+                if get_close_matches(
+                    meta.lower().replace("license", "").strip(), banned_licenses
+                ) or get_close_matches(
+                    classifier.lower()
+                    .replace("license", "")
+                    .replace("osi approved::", "")
+                    .strip(),
+                    banned_licenses,
+                ):
                     print(
                         f"\x1b[1;31mBANNED\x1b[0m: "
                         f"\x1b[1;33m{name}\x1b[0m "
-                        f"with license \x1b[1;33m{meta}\x1b[0m",
+                        f":: \x1b[1;33m{meta} - {classifier}\x1b[0m",
                         end="\n",
                     )
                     return_val = 1
