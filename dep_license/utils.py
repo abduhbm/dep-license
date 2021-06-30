@@ -1,9 +1,11 @@
 import json
 import logging
 import os
+import re
 import sys
 from collections import OrderedDict
 from distutils.core import run_setup
+from pathlib import Path
 
 import pkg_resources
 import toml
@@ -12,7 +14,21 @@ import yaml
 logger = logging.getLogger("dep_license")
 
 
+def extract_project(s: str) -> str:
+    match = re.compile("[^=<>~]+").match(s)
+    if match is None:
+        logger.error(f"could not parse {s}")
+        return None
+    return match.group(0).strip()
+
+
+def extract_projects(pp):
+    extracted = [extract_project(p) for p in pp]
+    return [e for e in extracted if e is not None]
+
+
 def parse_file(input_file, base_name, dev=False):
+    input_file = str(input_file)
     try:
         if base_name == "Pipfile":
             return parse_pip_file(input_file, dev=dev)
@@ -37,17 +53,9 @@ def parse_file(input_file, base_name, dev=False):
 
 
 def parse_req_file(input_file):
-    output = []
-    with open(input_file) as f:
-        lines = [x for x in f.readlines() if not x.startswith("-")]
-        for line in lines:
-            try:
-                for r in pkg_resources.parse_requirements(line):
-                    output.append(r.name)
-            except pkg_resources.RequirementParseError:
-                pass
-
-    return output
+    lines = Path(input_file).read_text(encoding="utf8").splitlines()
+    lines = [x for x in lines if not x.startswith("-")]
+    return extract_projects(lines)
 
 
 def parse_pip_file(input_file, dev=False):
@@ -74,44 +82,44 @@ def parse_pip_lock_file(input_file, dev=False):
 
 
 def parse_pyproject_file(input_file):
-    output = []
     cf = toml.load(input_file)
+    # parse build requirements
     reqs = cf.get("build-system", {}).get("requires", [])
-    for i in pkg_resources.parse_requirements(reqs):
-        output.append(i.project_name)
+    output = extract_projects(reqs)
+    # process poetry runtime dependencies
+    # ignore dev deps
+    reqs = cf.get("tool", {}).get("poetry", {}).get("dependencies", {})
+    output += extract_projects(reqs.keys())
     return output
 
 
 def parse_setup_file(input_file):
-    output = []
     cur_dir = os.getcwd()
     setup_dir = os.path.abspath(os.path.dirname(input_file))
+    was_in_path = setup_dir in sys.path
     sys.path.append(setup_dir)
     os.chdir(setup_dir)
     try:
-        setup = run_setup(input_file, stop_after="config")
-    except Exception as e:
-        logger.error(f"run_setup: {e}")
-        return []
+        try:
+            setup = run_setup(input_file, stop_after="config")
+        except Exception as e:
+            logger.error(f"run_setup: {e}")
+            logger.debug(f"run_setup: {e}", exc_info=True)
+            return []
 
-    reqs_var = ["install_requires", "setup_requires", "extras_require"]
-    for v in reqs_var:
-        reqs = getattr(setup, v)
-        if isinstance(reqs, list):
-            for i in pkg_resources.parse_requirements(reqs):
-                output.append(i.project_name)
-
-        elif isinstance(reqs, dict):
-            for i in pkg_resources.parse_requirements(
-                {v for req in reqs.values() for v in req}
-            ):
-                output.append(i.project_name)
-    os.chdir(cur_dir)
-    return output
+        reqs_var = ["install_requires", "setup_requires", "extras_require"]
+        for v in reqs_var:
+            reqs = getattr(setup, v)
+            if isinstance(reqs, dict):
+                reqs = reqs.values()
+            return [extract_project(dep) for dep in reqs]
+    finally:
+        if not was_in_path:
+            sys.path.remove(setup_dir)
+        os.chdir(cur_dir)
 
 
 def parse_conda_yaml_file(input_file):
-    output = []
     with open(input_file, "r") as f:
         cf = yaml.safe_load(f)
     if cf and "dependencies" in cf and isinstance(cf["dependencies"], list):
@@ -120,7 +128,5 @@ def parse_conda_yaml_file(input_file):
             if isinstance(r, dict) and "pip" in r:
                 for i in r["pip"]:
                     reqs.append(i)
-        for i in pkg_resources.parse_requirements(reqs):
-            output.append(i.project_name)
-
-    return output
+        return extract_projects(reqs)
+    return []
