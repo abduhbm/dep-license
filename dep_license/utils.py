@@ -9,7 +9,7 @@ import pkg_resources
 import toml
 import yaml
 
-logger = logging.getLogger("__name__")
+logger = logging.getLogger("dep_license")
 
 
 def parse_file(input_file, base_name, dev=False):

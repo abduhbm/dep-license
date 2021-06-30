@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import warnings
+from pathlib import Path
 from shutil import rmtree
 from urllib.request import urlopen
 
@@ -50,10 +51,10 @@ def is_valid_git_remote(project):
 
 def readonly_handler(func, path, execinfo):
     """
-        Work-around for python problem with shutils tree remove functions on Windows.
-        See:
-            https://stackoverflow.com/questions/23924223
-        """
+    Work-around for python problem with shutils tree remove functions on Windows.
+    See:
+        https://stackoverflow.com/questions/23924223
+    """
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
@@ -152,7 +153,6 @@ def start_concurrent(dependencies, max_workers=5):
 
 
 def run(argv=None):
-    warnings.simplefilter("ignore", UserWarning)
 
     projects, max_workers, fmt, output_file, dev, name, check, env = get_params(argv)
     return_val = 0
@@ -165,45 +165,44 @@ def run(argv=None):
     dependencies = []
 
     for project in projects:
+        p_path = Path(project).absolute()
         if env:
-            if not os.path.isfile(project):
+            if not p_path.isfile():
                 logger.error(f"{project} is invalid python executable.")
                 continue
             try:
                 out = subprocess.check_output([project, "-m", "pip", "freeze"])
                 if out:
+                    f = None
                     try:
                         f = tempfile.NamedTemporaryFile(delete=False)
                         f.write(out)
                         f.close()
                         dependencies += parse_file(f.name, "requirements.txt", dev=dev)
                     finally:
-                        os.remove(f.name)
+                        if f is not None:
+                            os.remove(f.name)
             except Exception:
                 logger.error(f"{project}: error in freezing dependencies.")
 
-        elif os.path.isdir(os.path.abspath(project)):
-            project = os.path.abspath(project)
+        elif p_path.isdir():
             for f in req_files:
-                filename = os.path.join(project, f)
-                if os.path.isfile(filename):
+                filename = Path(project) / f
+                if filename.isfile():
                     dependencies += parse_file(filename, f, dev=dev)
 
-        elif os.path.isfile(os.path.abspath(project)):
-            project = os.path.abspath(project)
-            filename = os.path.basename(project)
+        elif p_path.isfile():
+            filename = p_path.parent
             if filename in req_files:
                 dependencies += parse_file(project, filename, dev=dev)
 
         elif is_valid_git_remote(project):
             temp_dir = tempfile.TemporaryDirectory()
             git.Git(temp_dir.name).clone(project)
-            dir_name = os.path.join(
-                temp_dir.name, project.rsplit("/", 1)[-1].split(".")[0]
-            )
+            dir_name = Path(temp_dir.name) / project.rsplit("/", 1)[-1].split(".")[0]
             for f in req_files:
-                f_name = os.path.join(dir_name, f)
-                if os.path.isfile(f_name):
+                f_name = dir_name / f
+                if f_name.isfile():
                     dependencies += parse_file(f_name, f, dev=dev)
             if sys.platform.startswith("win"):
                 rmtree(temp_dir.name, onerror=readonly_handler)
@@ -218,8 +217,8 @@ def run(argv=None):
         print("no dependencies found")
         return 1
 
-    print("Found dependencies: {}\n".format(len(dependencies)))
-    logger.debug("Running with {} workers ...".format(max_workers))
+    print(f"Found dependencies: {len(dependencies)}\n")
+    logger.debug(f"Running with {max_workers} workers ...")
 
     results = start_concurrent(dependencies, max_workers=max_workers)
     if len(results) == 0:
@@ -234,13 +233,11 @@ def run(argv=None):
         output = json.dumps(results, indent=4)
 
     else:
-        rows = []
-        for r in results:
-            rows.append(list(r.values()))
+        rows = [list(r.values()) for r in results]
         if fmt == "csv":
             output += ",".join(COLUMNS) + "\n"
             for row in rows:
-                output += ",".join(row) + "\n"
+                output += ",".join([f'"{r}"' for r in row]) + "\n"
         else:
             output = tabulate(rows, COLUMNS, tablefmt=fmt)
 
@@ -248,16 +245,14 @@ def run(argv=None):
         print(output, end="\n")
 
     if output_file:
-        with open(output_file, "w") as f:
-            f.write(output)
-            f.close()
-            print("output file is stored in {}".format(os.path.abspath(output_file)))
+        Path(output_file).write_text(output, encoding="utf8")
+        print(f"output file is stored in {Path(output_file).absolute()}")
 
     if check:
         import configparser
         from difflib import get_close_matches
 
-        if not os.path.isfile(check):
+        if not Path(check).isfile():
             logger.error("configuration file not found")
             return 1
         config = configparser.ConfigParser()
