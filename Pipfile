@@ -4,10 +4,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-# Documentation.
-Sphinx = "~=4.0"
-sphinx-rtd-theme = "~=0.5"
-
 # Tools.
 pre-commit = "~=2.13"
 pytest = "*"
