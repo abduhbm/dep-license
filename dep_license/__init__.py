@@ -127,11 +127,13 @@ def worker(d):
     meta = output.get("license", "")
     record.append(meta.strip())
 
-    license_class = ""
+    license_class = list()
     classifier = output.get("classifiers", "")
+
+    # Group all license classifiers.
     for c in classifier:
         if c.startswith("License"):
-            license_class = "::".join([x.strip() for x in c.split("::")[1:]])
+            license_class.append("::".join([x.strip() for x in c.split("::")[1:]]))
     record.append(license_class)
 
     return dict(zip(COLUMNS, record))
