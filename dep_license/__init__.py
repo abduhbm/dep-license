@@ -64,7 +64,11 @@ def get_params(argv=None):
     )
     parser.add_argument("PROJECT", nargs="+", help="path to project or its GIT repo")
     parser.add_argument(
-        "-w", "--workers", default=5, help="number of workers to run in parallel"
+        "-w",
+        "--workers",
+        default=5,
+        type=int,
+        help="number of workers to run in parallel",
     )
     parser.add_argument(
         "-f", "--format", default="github", help="define how result is formatted"
