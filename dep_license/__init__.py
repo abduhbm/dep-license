@@ -123,12 +123,16 @@ def worker(d):
     meta = output.get("license", "")
     record.append(meta.strip())
 
-    license_class = ""
+    license_class = set()
     classifier = output.get("classifiers", "")
     for c in classifier:
         if c.startswith("License"):
-            license_class = "::".join([x.strip() for x in c.split("::")[1:]])
-    record.append(license_class)
+            license_class.add("::".join([x.strip() for x in c.split("::")[1:]]))
+
+    license_class_str = (
+        license_class.pop() if len(license_class) == 1 else str(license_class)
+    )
+    record.append(license_class_str)
 
     return dict(zip(COLUMNS, record))
 
