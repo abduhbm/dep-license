@@ -69,7 +69,7 @@ def get_params(argv=None):
         "-f", "--format", default="github", help="define how result is formatted"
     )
     parser.add_argument(
-        "--columns", nargs='+', default=["Name", "License", "License Classifier"], help="define which columns to display. The options are ['Author', 'Author Email', 'Bugtrack Url', 'Classifiers', 'Description', 'Description Content Type', 'Docs Url', 'Download Url', 'Downloads', 'Home Page', 'Keywords', 'License', 'Maintainer', 'Maintainer Email', 'Name', 'Package Url', 'Platform', 'Project Url', 'Project Urls', 'Release Url', 'Requires Dist', 'Requires Python', 'Summary', 'Version', 'Yanked', 'Yanked Reason']. Defaults to only the license information"
+        "--columns", nargs='+', default=["Name", "Meta", "Classifier"], help="define which columns to display. The options are ['Author', 'Author Email', 'Bugtrack Url', 'Classifiers', 'Description', 'Description Content Type', 'Docs Url', 'Download Url', 'Downloads', 'Home Page', 'Keywords', 'License', 'Maintainer', 'Maintainer Email', 'Name', 'Package Url', 'Platform', 'Project Url', 'Project Urls', 'Release Url', 'Requires Dist', 'Requires Python', 'Summary', 'Version', 'Yanked', 'Yanked Reason']. Defaults to only the license information"
     )
     parser.add_argument("-o", "--output", default=None, help="path for output file")
     parser.add_argument(
@@ -131,7 +131,9 @@ def worker(d):
         if c.startswith("License"):
             license_class.add("::".join([x.strip() for x in c.split("::")[1:]]))
 
-    record['License Classifier'] = ', '.join(license_class)
+    record['Classifier'] = ', '.join(license_class)
+    record['Meta'] = record['License']
+    record['Name'] = d
 
     return record
 
