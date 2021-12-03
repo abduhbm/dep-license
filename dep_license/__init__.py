@@ -34,7 +34,6 @@ SUPPORTED_FILES = [
     "conda.yml",
 ]
 PYPYI_URL = "https://pypi.python.org/pypi"
-COLUMNS = ["Name", "Meta", "Classifier"]
 
 
 def is_valid_git_remote(project):
@@ -69,6 +68,9 @@ def get_params(argv=None):
     parser.add_argument(
         "-f", "--format", default="github", help="define how result is formatted"
     )
+    parser.add_argument(
+        "--columns", nargs='+', default=["Name", "License", "License Classifier"], help="define which columns to display. The options are ['Author', 'Author Email', 'Bugtrack Url', 'Classifiers', 'Description', 'Description Content Type', 'Docs Url', 'Download Url', 'Downloads', 'Home Page', 'Keywords', 'License', 'Maintainer', 'Maintainer Email', 'Name', 'Package Url', 'Platform', 'Project Url', 'Project Urls', 'Release Url', 'Requires Dist', 'Requires Python', 'Summary', 'Version', 'Yanked', 'Yanked Reason']. Defaults to only the license information"
+    )
     parser.add_argument("-o", "--output", default=None, help="path for output file")
     parser.add_argument(
         "-d",
@@ -99,42 +101,39 @@ def get_params(argv=None):
     project = args.PROJECT
     w = args.workers
     fmt = args.format
+    columns = args.columns
     output = args.output
     dev = args.dev
     name = args.name
     check = args.check
     env = args.env
 
-    return project, w, fmt, output, dev, name, check, env
+    return project, w, fmt, columns, output, dev, name, check, env
 
 
 def worker(d):
-    d = d.replace('"', "")
-    d = d.replace("'", "")
-    record = [d]
+    d = d.replace('"', "").replace("'", "")
     try:
         with urlopen("{}/{}/json".format(PYPYI_URL, d)) as conn:
-            output = json.loads(conn.read().decode()).get("info")
+            pypi_response = json.loads(conn.read().decode()).get("info")
 
     except Exception:
         logger.warning(f"{d}: error in fetching pypi metadata")
         return None
 
-    meta = output.get("license", "")
-    record.append(meta.strip())
+    record = {}
+    for column, value in pypi_response.items():
+        record[column.replace('_', ' ').title()] = value
 
     license_class = set()
-    classifier = output.get("classifiers", "")
+    classifier = pypi_response.get("classifiers", "")
     for c in classifier:
         if c.startswith("License"):
             license_class.add("::".join([x.strip() for x in c.split("::")[1:]]))
 
-    license_class_str = (
-        license_class.pop() if len(license_class) == 1 else str(license_class)
-    )
-    record.append(license_class_str)
+    record['License Classifier'] = ', '.join(license_class)
 
-    return dict(zip(COLUMNS, record))
+    return record
 
 
 def start_concurrent(dependencies, max_workers=5):
@@ -158,7 +157,7 @@ def start_concurrent(dependencies, max_workers=5):
 def run(argv=None):
     warnings.simplefilter("ignore", UserWarning)
 
-    projects, max_workers, fmt, output_file, dev, name, check, env = get_params(argv)
+    projects, max_workers, fmt, columns, output_file, dev, name, check, env = get_params(argv)
     return_val = 0
 
     if name:
@@ -234,19 +233,19 @@ def run(argv=None):
     fmt = fmt.lower()
     if fmt == "json":
         import json
-
+        results = [{column: result.get(column) for column in columns} for result in results]
         output = json.dumps(results, indent=4)
 
     else:
         rows = []
         for r in results:
-            rows.append(list(r.values()))
+            rows.append([r.get(column, '') for column in columns])
         if fmt == "csv":
-            output += ",".join(COLUMNS) + "\n"
+            output += ",".join(columns) + "\n"
             for row in rows:
                 output += ",".join(row) + "\n"
         else:
-            output = tabulate(rows, COLUMNS, tablefmt=fmt)
+            output = tabulate(rows, columns, tablefmt=fmt)
 
     if not check:
         print(output, end="\n")
