@@ -3,11 +3,11 @@ import logging
 import os
 import sys
 from collections import OrderedDict
-from distutils.core import run_setup
 
 import pkg_resources
 import toml
 import yaml
+from distutils.core import run_setup
 
 logger = logging.getLogger("__name__")
 

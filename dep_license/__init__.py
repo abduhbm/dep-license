@@ -50,10 +50,10 @@ def is_valid_git_remote(project):
 
 def readonly_handler(func, path, execinfo):
     """
-        Work-around for python problem with shutils tree remove functions on Windows.
-        See:
-            https://stackoverflow.com/questions/23924223
-        """
+    Work-around for python problem with shutils tree remove functions on Windows.
+    See:
+        https://stackoverflow.com/questions/23924223
+    """
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
