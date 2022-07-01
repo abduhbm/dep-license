@@ -121,7 +121,7 @@ def worker(d):
         return None
 
     meta = output.get("license", "")
-    record.append(meta.strip())
+    record.append(meta.strip() if meta is not None else "")
 
     license_class = set()
     classifier = output.get("classifiers", "")
