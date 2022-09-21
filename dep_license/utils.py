@@ -28,7 +28,9 @@ def parse_file(input_file, base_name, dev=False):
 
         elif base_name == "conda.yml":
             return parse_conda_yaml_file(input_file)
-
+            
+        elif base_name == "poetry.lock":
+            return parse_poetry_lock_file(input_file)
         else:
             return parse_req_file(input_file)
     except Exception as e:
@@ -81,6 +83,11 @@ def parse_pyproject_file(input_file):
         output.append(i.project_name)
     return output
 
+def parse_poetry_lock_file(input_file):
+    output = []
+    cf = toml.load(input_file)
+    output = [ pkg["name"] for pkg in cf.get("package", []) if "name" in pkg ]
+    return output
 
 def parse_setup_file(input_file):
     output = []

@@ -117,9 +117,32 @@ def test_parsing_conda_yaml_file(tmpdir):
     )
     assert utils.parse_conda_yaml_file(x.strpath) == ["numpy", "pandas"]
 
+def test_parsing_poetry_lock_file(tmpdir):
+    x = tmpdir.join("poetry.lock")
+    x.write(
+        """
+        [[package]]
+        name = "anyio"
+        version = "3.5.0"
+        description = "High level compatibility layer for multiple asynchronous event loop implementations"
+        category = "dev"
+        optional = false
+        python-versions = ">=3.6.2"
+
+        [[package]]
+        name = "appnope"
+        version = "0.1.2"
+        description = "Disable App Nap on macOS >= 10.9"
+        category = "dev"
+        optional = false
+        python-versions = "*"
+        """
+    )
+    assert utils.parse_poetry_lock_file(x.strpath) == ["anyio", "appnope"]
+
 
 @pytest.mark.parametrize(
-    "f", ("requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock", "conda.yml")
+    "f", ("requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock", "conda.yml", "poetry.lock")
 )
 def test_passing_dependency_file(f, tmpdir):
     x = tmpdir.join(f)

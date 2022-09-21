@@ -32,6 +32,7 @@ SUPPORTED_FILES = [
     "pyproject.toml",
     "setup.py",
     "conda.yml",
+    "poetry.lock"
 ]
 PYPYI_URL = "https://pypi.python.org/pypi"
 COLUMNS = ["Name", "Meta", "Classifier"]
