@@ -32,7 +32,7 @@ SUPPORTED_FILES = [
     "pyproject.toml",
     "setup.py",
     "conda.yml",
-    "poetry.lock"
+    "poetry.lock",
 ]
 PYPYI_URL = "https://pypi.python.org/pypi"
 COLUMNS = ["Name", "Meta", "Classifier"]
@@ -131,7 +131,7 @@ def worker(d):
             license_class.add("::".join([x.strip() for x in c.split("::")[1:]]))
 
     license_class_str = (
-        license_class.pop() if len(license_class) == 1 else ', '.join(license_class)
+        license_class.pop() if len(license_class) == 1 else ", ".join(license_class)
     )
     record.append(license_class_str)
 
