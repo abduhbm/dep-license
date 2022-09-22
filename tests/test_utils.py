@@ -117,6 +117,7 @@ def test_parsing_conda_yaml_file(tmpdir):
     )
     assert utils.parse_conda_yaml_file(x.strpath) == ["numpy", "pandas"]
 
+
 def test_parsing_poetry_lock_file(tmpdir):
     x = tmpdir.join("poetry.lock")
     x.write(
@@ -142,7 +143,15 @@ def test_parsing_poetry_lock_file(tmpdir):
 
 
 @pytest.mark.parametrize(
-    "f", ("requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock", "conda.yml", "poetry.lock")
+    "f",
+    (
+        "requirements.txt",
+        "pyproject.toml",
+        "Pipfile",
+        "Pipfile.lock",
+        "conda.yml",
+        "poetry.lock",
+    ),
 )
 def test_passing_dependency_file(f, tmpdir):
     x = tmpdir.join(f)
