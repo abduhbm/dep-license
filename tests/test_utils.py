@@ -99,6 +99,64 @@ def test_parsing_pyproject_file(tmpdir):
     assert utils.parse_pyproject_file(x.strpath) == ["setuptools", "wheel", "numpy"]
 
 
+def test_parsing_pyproject_file_poetry(tmpdir):
+    x = tmpdir.join("pyproject.toml")
+    x.write(
+        """
+        [tool.poetry.dependencies]
+        python = ">=3.8,<3.11"
+        pandas = "^1.4.3"
+        fastapi = "^0.79.0"
+        numpy = "^1.23.1"
+
+        mkdocs  = { version = "^1.1.2", optional = true}
+        jinja2 = { version = "^2.10.2", optional = true }
+        MarkupSafe = { version = "2.0.1", optional = true }
+        mkdocs-include-markdown-plugin  = { version = "^1.0.0", optional = true}
+        mkdocs-material  = { version = "^6.1.7", optional = true}
+        mkdocstrings  = { version = "^0.17.0", optional = true}
+        mkdocs-material-extensions  = { version = "^1.0.1", optional = true}
+        mkdocs-autorefs = {version = "^0.2.1", optional = true}
+        pytkdocs = {extras = ["numpy-style"], version = "^0.15.0", optional = true}
+        mkdocs-gen-files = {version = "^0.3.3", python = "^3.7", optional = true}
+        mkdocs-literate-nav = {version = "^0.4.1", optional = true}
+        bump2version = {version = "^1.0.1", optional = true}
+
+        pytest  = { version = "^6.2.4", optional = true}
+        pytest-cov  = { version = "^2.12.0", optional = true}
+
+        types-pyyaml = [{optional = true, version = "*"}]
+        typing_extensions = [{optional = true, version = "*"}]
+        mypy = [{optional = true, version = "*"}]
+
+        pandas-stubs = [{optional = true, version = "^1.4.3"}]
+        """
+    )
+    assert utils.parse_pyproject_file_poetry(x.strpath) == [
+        "pandas",
+        "fastapi",
+        "numpy",
+        "mkdocs",
+        "jinja2",
+        "MarkupSafe",
+        "mkdocs-include-markdown-plugin",
+        "mkdocs-material",
+        "mkdocstrings",
+        "mkdocs-material-extensions",
+        "mkdocs-autorefs",
+        "pytkdocs",
+        "mkdocs-gen-files",
+        "mkdocs-literate-nav",
+        "bump2version",
+        "pytest",
+        "pytest-cov",
+        "types-pyyaml",
+        "typing_extensions",
+        "mypy",
+        "pandas-stubs",
+    ]
+
+
 def test_parsing_conda_yaml_file(tmpdir):
     x = tmpdir.join("conda.yml")
     x.write(

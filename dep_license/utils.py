@@ -24,7 +24,9 @@ def parse_file(input_file, base_name, dev=False):
             return parse_setup_file(input_file)
 
         elif base_name == "pyproject.toml":
-            return parse_pyproject_file(input_file)
+            return parse_pyproject_file(input_file) + parse_pyproject_file_poetry(
+                input_file
+            )
 
         elif base_name == "conda.yml":
             return parse_conda_yaml_file(input_file)
@@ -82,6 +84,15 @@ def parse_pyproject_file(input_file):
     for i in pkg_resources.parse_requirements(reqs):
         output.append(i.project_name)
     return output
+    
+    
+def parse_pyproject_file_poetry(input_file):
+    cf = toml.load(input_file)
+    return [
+        k
+        for k, v in cf.get("tool", {}).get("poetry", {}).get("dependencies", {}).items()
+        if not (isinstance(v, dict) and "path" in v) and k not in ["python"]
+    ]
 
 
 def parse_poetry_lock_file(input_file):
