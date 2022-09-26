@@ -1,3 +1,5 @@
+import warnings
+
 from dep_license import run
 
 
@@ -6,4 +8,5 @@ def main():
 
 
 if __name__ == "__main__":
+    warnings.simplefilter("ignore", UserWarning)
     exit(main())
