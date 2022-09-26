@@ -84,8 +84,8 @@ def parse_pyproject_file(input_file):
     for i in pkg_resources.parse_requirements(reqs):
         output.append(i.project_name)
     return output
-    
-    
+
+
 def parse_pyproject_file_poetry(input_file):
     cf = toml.load(input_file)
     return [
