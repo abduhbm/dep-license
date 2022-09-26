@@ -17,6 +17,7 @@ Supported dependency files:
 * `Pipfile`
 * `Pipfile.lock`
 * `conda.yaml`
+* `poetry.lock`
 
 ### Installation
 
