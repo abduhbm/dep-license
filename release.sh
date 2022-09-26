@@ -1,6 +1,6 @@
 set -ex
 
-git pull origin master
+git pull origin main
 # bump version
 docker run --rm -v "$PWD":/app treeder/bump --filename dep_license/VERSION $1
 version=`cat dep_license/VERSION`
